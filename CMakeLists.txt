@@ -26,10 +26,9 @@ if(UNIX)
 endif()
 
 find_package(Vulkan REQUIRED)
-
-add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
 list(APPEND EXTERNAL_LIBS ${Vulkan_LIBRARIES})
 
+add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTERNAL_LIBS})
 
 target_include_directories(
