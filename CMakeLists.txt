@@ -16,9 +16,10 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glm/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glfw/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/json/)
 
-file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 file(GLOB_RECURSE SOURCE ${CMAKE_SOURCE_DIR}/src/*.cpp)
-
+file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/include/*.h)
+file(GLOB_RECURSE GLAD_SOURCE ${CMAKE_SOURCE_DIR}/extern/glad/src/*.c)
+file(GLOB_RECURSE GLAD_HEADERS ${CMAKE_SOURCE_DIR}/extern/glad/include/*.h)
 
 list(APPEND EXTERNAL_LIBS glfw glm nlohmann_json::nlohmann_json)
 if(UNIX)
@@ -28,7 +29,7 @@ endif()
 find_package(Vulkan REQUIRED)
 list(APPEND EXTERNAL_LIBS ${Vulkan_LIBRARIES})
 
-add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS} ${GLAD_SOURCE} ${GLAD_HEADERS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTERNAL_LIBS})
 
 target_include_directories(
@@ -40,6 +41,7 @@ target_include_directories(
     "${CMAKE_SOURCE_DIR}/extern/glfw/include/"
     "${CMAKE_SOURCE_DIR}/extern/glm/"
     "${CMAKE_SOURCE_DIR}/extern/stb/"
+    "${CMAKE_SOURCE_DIR}/extern/glad/include/"
 )
 
 add_custom_target(
