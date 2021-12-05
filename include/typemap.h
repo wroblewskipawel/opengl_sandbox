@@ -8,8 +8,6 @@
 #include <unordered_map>
 #include <variant>
 
-using namespace std::string_literals;
-
 template <typename T, typename... Types>
 static constexpr bool contains_type() {
     return std::disjunction_v<std::is_same<T, Types>...>;
@@ -28,13 +26,13 @@ class TypeMap {
 
     template <typename T>
     T& at() {
-        static_assert(contains_type<T, Types...>(), "Type T not in Resources"s);
+        static_assert(contains_type<T, Types...>(), "Type T not in Resources");
         return std::get<T>(resource_map.at(std::type_index(typeid(T))));
     }
 
     template <typename T>
     const T& at() const {
-        static_assert(contains_type<T, Types...>(), "Type T not in Resources"s);
+        static_assert(contains_type<T, Types...>(), "Type T not in Resources");
         return std::get<T>(resource_map.at(std::type_index(typeid(T))));
     }
 
