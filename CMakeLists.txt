@@ -26,8 +26,10 @@ if(UNIX)
     list(APPEND EXTERNAL_LIBS X11 pthread Xrandr Xi)
 endif()
 
+find_package(OpenGL REQUIRED)
 find_package(Vulkan REQUIRED)
 list(APPEND EXTERNAL_LIBS ${Vulkan_LIBRARIES})
+list(APPEND EXTERNAL_LIBS ${OpenGL_LIBRARIES})
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS} ${GLAD_SOURCE} ${GLAD_HEADERS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTERNAL_LIBS})
@@ -41,6 +43,7 @@ target_include_directories(
     "${CMAKE_SOURCE_DIR}/extern/glfw/include/"
     "${CMAKE_SOURCE_DIR}/extern/glm/"
     "${CMAKE_SOURCE_DIR}/extern/stb/"
+    "${CMAKE_SOURCE_DIR}/extern/magic_enum/"
     "${CMAKE_SOURCE_DIR}/extern/glad/include/"
 )
 

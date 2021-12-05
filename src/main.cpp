@@ -1,5 +1,3 @@
-#define GLFW_INCLUDE_VULKAN
-
 #include <exception>
 #include <iostream>
 
@@ -7,7 +5,7 @@
 
 int main() {
     try {
-        Application app{"Rupture"};
+        Demo app{};
         app.run();
     } catch (std::exception& e) {
         std::cout << e.what() << '\n';
