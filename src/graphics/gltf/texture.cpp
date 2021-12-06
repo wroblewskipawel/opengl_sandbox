@@ -48,11 +48,8 @@ Texture::Texture(const std::filesystem::path& path,
 void Texture::loadFile(const std::filesystem::path& path) {
     int width{}, height{}, comp{};
     int components = enum_integer(m_format);
-    auto string_path = path.string();
-    // stbi_uc* image =
-    //     stbi_load(path.c_str(), &width, &height, &comp, components);
     stbi_uc* image =
-        stbi_load(string_path.c_str(), &width, &height, &comp, components);
+        stbi_load(path.string().c_str(), &width, &height, &comp, components);
     if (image) {
         size_t imageByteSize = width * height * components;
         m_imageData.resize(imageByteSize);
@@ -101,9 +98,7 @@ std::string Texture::getGltfUID(const std::filesystem::path& path,
 
 HDRTexture::HDRTexture(const std::filesystem::path& path) {
     int width{}, height{}, comp{};
-    auto string_path = path.string();
-    // float* image = stbi_loadf(path.c_str(), &width, &height, &comp, 0);
-    float* image = stbi_loadf(string_path.c_str(), &width, &height, &comp, 0);
+    float* image = stbi_loadf(path.string().c_str(), &width, &height, &comp, 0);
     if (image) {
         size_t imageByteSize = width * height * comp * sizeof(float);
         m_imageData.resize(width * height * comp);
