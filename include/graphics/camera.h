@@ -41,6 +41,8 @@ class Camera {
 
     friend class gl::Window;
 
+    std::optional<ResizeCallback> resizeCallback();
+
     virtual std::optional<std::unordered_map<int, KeyCallback>> keyCallbacks() {
         return std::nullopt;
     }

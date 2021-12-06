@@ -101,8 +101,9 @@ void TileSet::removeDuplicates(const gltf::Mesh<RigidVertex>& mesh,
             cleanIndices.push_back(item->second);
         } else {
             cleanVertices.push_back(vertex.pos);
-            cleanIndices.push_back(cleanVertices.size() - 1);
-            vertMap.emplace(vertex.pos, cleanVertices.size() - 1);
+            uint32_t index = static_cast<uint32_t>(cleanVertices.size() - 1);
+            cleanIndices.push_back(index);
+            vertMap.emplace(vertex.pos, index);
         }
     }
 };

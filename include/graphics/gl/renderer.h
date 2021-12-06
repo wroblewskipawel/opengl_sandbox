@@ -355,9 +355,9 @@ class Renderer : public RendererState {
         m_materialIndexBuffer.write(command.m_materialIndices, GL_STREAM_DRAW);
         m_instanceBuffer.write(command.m_instanceAttributes, GL_STREAM_DRAW);
 
-        glMultiDrawElementsIndirect(
-            command.m_drawMode, GL_UNSIGNED_INT, nullptr,
-            m_drawIndirectBuffer.commandCount(), sizeof(command::Draw));
+        glMultiDrawElementsIndirect(command.m_drawMode, GL_UNSIGNED_INT, NULL,
+                                    m_drawIndirectBuffer.commandCount(),
+                                    sizeof(command::Draw));
     }
 
     static const size_t drawBufferCapacity{DrawBufferSize};

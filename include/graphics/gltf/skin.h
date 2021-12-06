@@ -94,13 +94,13 @@ class Skin {
         glm::vec3 s;
         uint32_t firstChild;
         uint32_t numChildren;
-        int32_t nodeId;
+        uint32_t nodeId;
     };
 
     std::vector<Joint> m_joints;
     std::vector<Animation> m_animations;
     std::unordered_map<std::string, size_t> m_animationMap;
-    std::unordered_map<int32_t, uint32_t> m_meshNodeIndexMap;
+    std::unordered_map<uint32_t, uint32_t> m_meshNodeIndexMap;
 };
 
 }  // namespace gltf

@@ -93,6 +93,8 @@ class Window {
         cameraCallbacks.focus = camera.focusCallback(*this);
         cameraCallbacks.key = camera.keyCallbacks();
         cameraCallbacks.scroll = camera.scrollCallback();
+        cameraCallbacks.resize = camera.resizeCallback();
+
         cameraCallbacks.camera = &camera;
 
         camera.m_callbackCleanup = [this, &camera]() mutable {
@@ -104,6 +106,7 @@ class Window {
                 cameraCallbacks.cursor = std::nullopt;
                 cameraCallbacks.focus = std::nullopt;
                 cameraCallbacks.cursorState = std::nullopt;
+                cameraCallbacks.resize = std::nullopt;
             }
         };
 
@@ -294,6 +297,7 @@ class Window {
         std::optional<ScrollCallback> scroll;
         std::optional<CursorPosCallback> cursor;
         std::optional<FocusCallback> focus;
+        std::optional<ResizeCallback> resize;
     } cameraCallbacks;
 
     static void glfwErrorCallback(int err, const char* desc) {
@@ -340,6 +344,9 @@ class Window {
     }
     static void glfwResizeCallback(GLFWwindow* window, int width, int height) {
         for (auto& c : resizeCallbacks) c(width, height);
+        if (cameraCallbacks.resize.has_value()) {
+            cameraCallbacks.resize.value()(width, height);
+        }
     }
 
     static void APIENTRY glDebugOutput(GLenum source, GLenum type,

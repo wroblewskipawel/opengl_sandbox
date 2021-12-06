@@ -96,7 +96,7 @@ void CubeRenderer::bind() {
 void CubeRenderer::drawSkybox(Environment& environment,
                               const glm::mat4& cameraMatrix,
                               const glm::vec3& cameraPosition) {
-    Framebuffer::bindDefault();
+    Framebuffer::bindDefault(Framebuffer::BindPoint::Draw);
 
     glCullFace(GL_FRONT);
     glDisable(GL_DEPTH_TEST);
@@ -147,7 +147,7 @@ Environment CubeRenderer::createEnvironmentMap(
     m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0, GL_NONE);
     m_framebuffer.setDrawBuffers({Framebuffer::Buffer::None});
 
-    Framebuffer::bindDefault();
+    Framebuffer::bindDefault(Framebuffer::BindPoint::Draw);
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
 
@@ -197,18 +197,18 @@ Texture CubeRenderer::renderIrradianceMap(Texture& environmentCube,
     Texture irradianceCube{GL_TEXTURE_CUBE_MAP, GL_RGB16F, cubeResolution,
                            cubeResolution,      sampler,   1};
 
-    m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0,
-                                irradianceCube.texture());
+    // m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0,
+    //                             irradianceCube.texture());
 
-    m_irradianceMapShader.use();
+    // m_irradianceMapShader.use();
 
-    glBindTextureUnit(0, environmentCube.texture());
-    m_irradianceMapShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
-    m_irradianceMapShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
-    m_irradianceMapShader.bindUniformBlock(m_projections.blockInfo());
+    // glBindTextureUnit(0, environmentCube.texture());
+    // m_irradianceMapShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
+    // m_irradianceMapShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
+    // m_irradianceMapShader.bindUniformBlock(m_projections.blockInfo());
 
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    // glClear(GL_COLOR_BUFFER_BIT);
+    // glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     return irradianceCube;
 }
@@ -226,27 +226,27 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
     Texture specularCube{GL_TEXTURE_CUBE_MAP, GL_RGB16F, cubeResolution,
                          cubeResolution,      sampler,   mipLevels};
 
-    m_specularMapShader.use();
+    // m_specularMapShader.use();
 
-    glBindTextureUnit(0, environmentCube.texture());
-    m_specularMapShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
-    m_specularMapShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
-    m_specularMapShader.bindUniformBlock(m_projections.blockInfo());
+    // glBindTextureUnit(0, environmentCube.texture());
+    // m_specularMapShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
+    // m_specularMapShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
+    // m_specularMapShader.bindUniformBlock(m_projections.blockInfo());
 
-    for (size_t l{0}; l < mipLevels; l++) {
-        m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0,
-                                    specularCube.texture(), l);
+    // for (size_t l{0}; l < mipLevels; l++) {
+    //     m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0,
+    //                                 specularCube.texture(), l);
 
-        size_t mipResolution = cubeResolution * glm::pow(0.5, l);
-        float roughness =
-            static_cast<float>(l) / static_cast<float>(mipLevels - 1);
+    //     size_t mipResolution = cubeResolution * glm::pow(0.5, l);
+    //     float roughness =
+    //         static_cast<float>(l) / static_cast<float>(mipLevels - 1);
 
-        m_specularMapShader.setUniformF(ROUGHNESS_UNIFORM, roughness);
+    //     m_specularMapShader.setUniformF(ROUGHNESS_UNIFORM, roughness);
 
-        glViewport(0, 0, mipResolution, mipResolution);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    }
+    //     glViewport(0, 0, mipResolution, mipResolution);
+    //     glClear(GL_COLOR_BUFFER_BIT);
+    //     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    // }
 
     return specularCube;
 }
@@ -329,7 +329,7 @@ Texture QuadRenderer::createBRDFMap(size_t width, size_t height) {
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-    Framebuffer::bindDefault();
+    Framebuffer::bindDefault(Framebuffer::BindPoint::Draw);
 
     m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0, GL_NONE);
     m_framebuffer.setDrawBuffers({Framebuffer::Buffer::None});

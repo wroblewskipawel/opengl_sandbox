@@ -85,13 +85,15 @@ class Framebuffer {
                                      static_cast<GLenum>(buffer));
     }
 
-    static void bindDefault() {
-        currentFramebuffer = 0;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    static void bindDefault(BindPoint binding) {
+        if (currentFramebuffer != 0) {
+            currentFramebuffer = 0;
+            glBindFramebuffer(static_cast<GLenum>(binding), 0);
+        }
     }
 
    private:
-    inline static GLuint currentFramebuffer;
+    inline static GLuint currentFramebuffer{0};
 
     GLuint m_glFramebuffer;
 };

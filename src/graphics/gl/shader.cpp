@@ -122,7 +122,7 @@ void Shader::interfaceQuery() {
     GLint uniformBlockCount{};
     glGetProgramInterfaceiv(m_glProgram, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES,
                             &uniformBlockCount);
-    for (size_t index{0}; index < uniformBlockCount; index++) {
+    for (GLuint index{0}; index < uniformBlockCount; index++) {
         glGetProgramResourceName(m_glProgram, GL_UNIFORM_BLOCK, index,
                                  glBufferLen, NULL, glBuffer);
         glUniformBlockBinding(m_glProgram, index, index);
@@ -137,31 +137,33 @@ void Shader::interfaceQuery() {
     GLint uniformCount{};
     glGetProgramInterfaceiv(m_glProgram, GL_UNIFORM, GL_ACTIVE_RESOURCES,
                             &uniformCount);
-    std::vector<GLuint> uniformIndices(uniformCount);
-    for (uint32_t i{0}; i < uniformCount; i++) {
-        uniformIndices[i] = i;
-    }
-    std::vector<GLint> uniform_blocks(uniformCount);
-    glGetActiveUniformsiv(m_glProgram, uniformCount, uniformIndices.data(),
-                          GL_UNIFORM_BLOCK_INDEX, uniform_blocks.data());
-    std::vector<GLint> array_strides(uniformCount);
-    glGetActiveUniformsiv(m_glProgram, uniformCount, uniformIndices.data(),
-                          GL_UNIFORM_ARRAY_STRIDE, array_strides.data());
-
-    for (size_t index{0}; index < uniformCount; index++) {
-        if (uniform_blocks[index] == -1 && array_strides[index] < 1) {
-            glGetProgramResourceName(m_glProgram, GL_UNIFORM, index,
-                                     glBufferLen, NULL, glBuffer);
-            std::string uniformName{glBuffer};
-            m_uniformLocations.emplace(
-                glBuffer,
-                glGetUniformLocation(m_glProgram, uniformName.c_str()));
+    if (uniformCount > 0) {
+        std::vector<GLuint> uniformIndices(uniformCount);
+        for (GLuint i{0}; i < uniformCount; i++) {
+            uniformIndices[i] = i;
         }
-    }
+        std::vector<GLint> uniform_blocks(uniformCount);
+        glGetActiveUniformsiv(m_glProgram, uniformCount, uniformIndices.data(),
+                              GL_UNIFORM_BLOCK_INDEX, uniform_blocks.data());
+        std::vector<GLint> array_strides(uniformCount);
+        glGetActiveUniformsiv(m_glProgram, uniformCount, uniformIndices.data(),
+                              GL_UNIFORM_ARRAY_STRIDE, array_strides.data());
 
-    for (const auto& [name, location] : m_uniformLocations) {
-        std::cout << "Uniform: " << name << " ; Location: " << location
-                  << std::endl;
+        for (GLuint index{0}; index < uniformCount; index++) {
+            if (uniform_blocks[index] == -1 && array_strides[index] < 1) {
+                glGetProgramResourceName(m_glProgram, GL_UNIFORM, index,
+                                         glBufferLen, NULL, glBuffer);
+                std::string uniformName{glBuffer};
+                m_uniformLocations.emplace(
+                    uniformName,
+                    glGetUniformLocation(m_glProgram, uniformName.c_str()));
+            }
+        }
+
+        for (const auto& [name, location] : m_uniformLocations) {
+            std::cout << "Uniform: " << name << " ; Location: " << location
+                      << std::endl;
+        }
     }
 }
 

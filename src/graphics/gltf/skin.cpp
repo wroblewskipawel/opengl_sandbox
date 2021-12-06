@@ -9,7 +9,7 @@
 namespace gltf {
 
 Skin::Skin(const fx::gltf::Document& document, const fx::gltf::Skin& skin) {
-    std::unordered_map<int32_t, glm::mat4> bindMap{};
+    std::unordered_map<uint32_t, glm::mat4> bindMap{};
     if (skin.inverseBindMatrices != -1) {
         const auto& bindAccesor = document.accessors[skin.inverseBindMatrices];
         auto inverseBind =
@@ -25,16 +25,17 @@ Skin::Skin(const fx::gltf::Document& document, const fx::gltf::Skin& skin) {
     }
 
     for (size_t i{0}; i < skin.joints.size(); i++) {
-        m_meshNodeIndexMap.emplace(skin.joints[i], i);
+        m_meshNodeIndexMap.emplace(skin.joints[i], static_cast<uint32_t>(i));
     }
 
     std::stack<std::pair<int32_t, Joint&>> to_visit;
     m_joints.reserve(skin.joints.size());
     to_visit.push({skin.skeleton, m_joints.emplace_back()});
     while (!to_visit.empty()) {
-        auto [nodeID, joint] = to_visit.top();
+        auto [node, joint] = to_visit.top();
         to_visit.pop();
-        if (nodeID != -1) {
+        if (node != -1) {
+            uint32_t nodeID{static_cast<uint32_t>(node)};
             auto node = document.nodes[nodeID];
             joint.inverseBind = bindMap.at(nodeID);
             std::memcpy(&joint.r, &node.rotation, sizeof(glm::quat));

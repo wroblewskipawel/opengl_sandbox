@@ -16,7 +16,6 @@
 #include "graphics/gl/light.h"
 #include "graphics/gltf/document.h"
 #include "graphics/shape.h"
-#include "graphics/tile_renderer.h"
 #include "graphics/window.h"
 #include "world/tile_map.h"
 #include "world/tile_set.h"
@@ -66,7 +65,6 @@ void Application::run() {
 
     std::chrono::steady_clock clock{};
     auto lastTime = clock.now();
-    auto environment = m_environments[0];
 
     while (m_isRunning) {
         auto currenTime = clock.now();

@@ -169,7 +169,7 @@ class Shader {
     void interfaceQuery();
 
     std::unordered_map<std::string, GLuint> m_blockBindings;
-    std::unordered_map<std::string, GLuint> m_uniformLocations;
+    std::unordered_map<std::string, GLint> m_uniformLocations;
 
     inline static GLuint currnetProgram{GL_NONE};
     GLuint m_glProgram;

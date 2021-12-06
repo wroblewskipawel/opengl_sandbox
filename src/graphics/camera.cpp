@@ -9,11 +9,16 @@ Camera::Camera(gl::Window& window, float fovYDeg, float nearClipPlane,
       m_farClipPlane{farClipPlane},
       m_aspectRatio{static_cast<float>(window.width()) / window.height()} {
     updateProjectionMatrix();
-    window.registerResizeCallback([this](int width, int height) mutable {
-        m_aspectRatio = static_cast<float>(width) / height;
-        updateProjectionMatrix();
-    });
 };
+
+std::optional<ResizeCallback> Camera::resizeCallback() {
+    return [this](int width, int height) mutable {
+        if (width != 0 && height != 0) {
+            m_aspectRatio = static_cast<float>(width) / height;
+            updateProjectionMatrix();
+        };
+    };
+}
 
 FirstPersonCamera::FirstPersonCamera(gl::Window& window, glm::vec3 position,
                                      glm::vec3 forward, float fovYDeg,

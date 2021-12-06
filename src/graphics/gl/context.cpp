@@ -23,7 +23,8 @@ void Context::loadShaders(
     auto& shaders = at<Shader>();
     for (auto& dir : shaderDirs) {
         shaders.emplace_back(dir);
-        m_shaderMap.emplace(dir.stem(), handle::Shader(shaders.size() - 1));
+        m_shaderMap.emplace(dir.stem().string(),
+                            handle::Shader(shaders.size() - 1));
     }
 }
 
