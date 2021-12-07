@@ -39,7 +39,7 @@ target_include_directories(
     "${Vulkan_INCLUDE_DIRS}"
     "${CMAKE_SOURCE_DIR}/include/"
     "${CMAKE_SOURCE_DIR}/extern/json/include/"
-    "${CMAKE_SOURCE_DIR}/extern/fx-gltf/include/"
+    "${CMAKE_SOURCE_DIR}/extern/fx-gltf/"
     "${CMAKE_SOURCE_DIR}/extern/glfw/include/"
     "${CMAKE_SOURCE_DIR}/extern/glm/"
     "${CMAKE_SOURCE_DIR}/extern/stb/"
