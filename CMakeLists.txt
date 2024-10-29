@@ -27,8 +27,6 @@ if(UNIX)
 endif()
 
 find_package(OpenGL REQUIRED)
-find_package(Vulkan REQUIRED)
-list(APPEND EXTERNAL_LIBS ${Vulkan_LIBRARIES})
 list(APPEND EXTERNAL_LIBS ${OpenGL_LIBRARIES})
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS} ${GLAD_SOURCE} ${GLAD_HEADERS})
@@ -36,7 +34,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTERNAL_LIBS})
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
-    "${Vulkan_INCLUDE_DIRS}"
     "${CMAKE_SOURCE_DIR}/include/"
     "${CMAKE_SOURCE_DIR}/extern/json/include/"
     "${CMAKE_SOURCE_DIR}/extern/fx-gltf/"
@@ -60,3 +57,5 @@ add_custom_target(
     ${CMAKE_SOURCE_DIR}/assets/
     ${CMAKE_BINARY_DIR}/assets/
 )
+
+add_dependencies(${PROJECT_NAME} UPDATE_SHADERS UPDATE_ASSETS)
