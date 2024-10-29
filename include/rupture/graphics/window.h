@@ -217,15 +217,9 @@ class Window {
                 glViewport(0, 0, width, height);
             });
             focusCallbacks.push_back([this](int focus) {
-                if (focus == GLFW_TRUE) {
-                    glfwGetCursorPos(window, &m_cursorPos.x, &m_cursorPos.y);
-                    enableInputCallbacks();
-                    m_hasFocus = true;
-                } else {
-                    disableInputCallbacks();
-                    m_hasFocus = false;
-                }
+                enableUserInputOnFocus(focus == GLFW_TRUE);
             });
+            enableUserInputOnFocus(true);
             glfwFocusWindow(window);
 
             m_dTime = 0.0;
@@ -254,6 +248,17 @@ class Window {
         }
     };
 
+    void enableUserInputOnFocus(bool hasFocus) {
+        if (hasFocus && !m_hasFocus) {
+            glfwGetCursorPos(window, &m_cursorPos.x, &m_cursorPos.y);
+            enableInputCallbacks();
+            m_hasFocus = true;
+        } else if (!hasFocus && m_hasFocus) {
+            disableInputCallbacks();
+            m_hasFocus = false;
+        }
+    }
+
     void enableInputCallbacks() {
         glfwSetKeyCallback(window, glfwKeyEventCallback);
         glfwSetMouseButtonCallback(window, glfwMouseEventCallback);
@@ -273,7 +278,7 @@ class Window {
     double m_dTime;
     uint32_t m_width;
     uint32_t m_height;
-    bool m_hasFocus;
+    bool m_hasFocus{false};
 
     inline static std::unordered_map<int, std::vector<KeyPressFunction>>
         keyPressFunctions{};
