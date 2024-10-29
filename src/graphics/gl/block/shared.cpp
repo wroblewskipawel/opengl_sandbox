@@ -1,4 +1,4 @@
-#include "graphics/gl/block/shared.h"
+#include "rupture/graphics/gl/block/shared.h"
 
 namespace gl {
 

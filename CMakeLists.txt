@@ -13,15 +13,14 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_Install OFF CACHE INTERNAL "")
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glm/)
+add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glad/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glfw/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/json/)
 
 file(GLOB_RECURSE SOURCE ${CMAKE_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/include/*.h)
-file(GLOB_RECURSE GLAD_SOURCE ${CMAKE_SOURCE_DIR}/extern/glad/src/*.c)
-file(GLOB_RECURSE GLAD_HEADERS ${CMAKE_SOURCE_DIR}/extern/glad/include/*.h)
 
-list(APPEND EXTERNAL_LIBS glfw glm nlohmann_json::nlohmann_json)
+list(APPEND EXTERNAL_LIBS glad glfw glm nlohmann_json::nlohmann_json)
 if(UNIX)
     list(APPEND EXTERNAL_LIBS X11 pthread Xrandr Xi)
 endif()
@@ -29,11 +28,12 @@ endif()
 find_package(OpenGL REQUIRED)
 list(APPEND EXTERNAL_LIBS ${OpenGL_LIBRARIES})
 
-add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS} ${GLAD_SOURCE} ${GLAD_HEADERS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTERNAL_LIBS})
+add_library(${PROJECT_NAME} STATIC ${SOURCE} ${HEADERS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTERNAL_LIBS})
 
 target_include_directories(
-    ${PROJECT_NAME} PRIVATE
+    ${PROJECT_NAME}
+    PUBLIC
     "${CMAKE_SOURCE_DIR}/include/"
     "${CMAKE_SOURCE_DIR}/extern/json/include/"
     "${CMAKE_SOURCE_DIR}/extern/fx-gltf/"
@@ -44,18 +44,13 @@ target_include_directories(
     "${CMAKE_SOURCE_DIR}/extern/glad/include/"
 )
 
-add_custom_target(
-    UPDATE_SHADERS
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/shaders/
-    ${CMAKE_BINARY_DIR}/shaders/
+set(SHADER_DIR "${CMAKE_SOURCE_DIR}/shaders/")
+set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets/")
+target_compile_definitions(
+    ${PROJECT_NAME}
+    PUBLIC
+    SHADER_DIR="${SHADER_DIR}"
+    ASSETS_DIR="${ASSETS_DIR}"
 )
 
-add_custom_target(
-    UPDATE_ASSETS
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/assets/
-    ${CMAKE_BINARY_DIR}/assets/
-)
-
-add_dependencies(${PROJECT_NAME} UPDATE_SHADERS UPDATE_ASSETS)
+add_subdirectory(${CMAKE_SOURCE_DIR}/examples/)

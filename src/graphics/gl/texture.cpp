@@ -1,4 +1,4 @@
-#include "graphics/gl/texture.h"
+#include "rupture/graphics/gl/texture.h"
 
 #include <iostream>
 

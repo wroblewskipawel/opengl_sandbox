@@ -1,4 +1,4 @@
-#include "graphics/gl/shader.h"
+#include "rupture/graphics/gl/shader.h"
 
 #include <array>
 #include <exception>
@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "graphics/gl/block/shared.h"
+#include "rupture/graphics/gl/block/shared.h"
 
 namespace gl {
 

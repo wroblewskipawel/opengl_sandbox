@@ -1,4 +1,4 @@
-#include "graphics/gltf/texture.h"
+#include "rupture/graphics/gltf/texture.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 

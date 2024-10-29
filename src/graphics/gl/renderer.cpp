@@ -1,17 +1,11 @@
-#include "graphics/gl/renderer.h"
+#include "rupture/graphics/gl/renderer.h"
 
 #include <glm/glm.hpp>
 
-#include "graphics/gl/texture.h"
-#include "graphics/gltf/texture.h"
+#include "rupture/graphics/shaders/shaders.h"
+#include "rupture/graphics/gl/texture.h"
+#include "rupture/graphics/gltf/texture.h"
 
-const std::string DEPTH_CUBE_SHADER_PATH{"shaders/utils/depth_cube"s};
-const std::string COLOR_CUBE_SHADER_PATH{"shaders/utils/color_cube"s};
-const std::string IRRADIANCE_MAP_SHADER_PATH{"shaders/utils/irradiance_map"s};
-const std::string SPECULAR_MAP_SHADER_PATH{"shaders/utils/specular_map"s};
-const std::string BRDF_MAP_SHADER_PATH{"shaders/utils/brdf_map"s};
-const std::string SKYBOX_SHADER_PATH{"shaders/utils/skybox"s};
-const std::string TEXTURED_QUAD_SHADER_PATH{"shaders/utils/textured_quad"s};
 
 const std::string PROJECTION_UNIFORM{"CubeProjection"s};
 const std::string ENV_2D_TEXTURE_UNIFORM{"equirectangular_map"s};
@@ -24,11 +18,11 @@ namespace gl {
 
 CubeRenderer::CubeRenderer()
     : m_projections{PROJECTION_UNIFORM},
-      m_depthCubeShader{DEPTH_CUBE_SHADER_PATH},
-      m_colorCubeShader{COLOR_CUBE_SHADER_PATH},
-      m_irradianceMapShader{IRRADIANCE_MAP_SHADER_PATH},
-      m_specularMapShader{SPECULAR_MAP_SHADER_PATH},
-      m_skyboxShader{SKYBOX_SHADER_PATH} {
+      m_depthCubeShader{shader::core::DEPTH_CUBE},
+      m_colorCubeShader{shader::core::COLOR_CUBE},
+      m_irradianceMapShader{shader::core::IRRADIANCE_MAP},
+      m_specularMapShader{shader::core::SPECULAR_MAP},
+      m_skyboxShader{shader::core::SKYBOX} {
     createVertexBuffer();
     createVertexArray();
     writeProjectionUniform();
@@ -254,8 +248,8 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
 void CubeRenderer::createOmniShadowMap() {}
 
 QuadRenderer::QuadRenderer()
-    : m_brdfMapShader{BRDF_MAP_SHADER_PATH},
-      m_texturedQuadShader{TEXTURED_QUAD_SHADER_PATH} {
+    : m_brdfMapShader{shader::core::BRDF_MAP},
+      m_texturedQuadShader{shader::core::TEXTURED_QUAD} {
     createVertexBuffer();
     createVertexArray();
 }

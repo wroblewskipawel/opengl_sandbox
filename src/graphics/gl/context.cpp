@@ -1,4 +1,4 @@
-#include "graphics/gl/context.h"
+#include "rupture/graphics/gl/context.h"
 
 #define GLM_FORCE_RADIANS
 

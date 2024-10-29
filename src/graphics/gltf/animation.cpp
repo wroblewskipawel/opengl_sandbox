@@ -1,10 +1,10 @@
-#include "graphics/gltf/animation.h"
+#include "rupture/graphics/gltf/animation.h"
 
 #include <cstring>
 #include <iostream>
 #include <string>
 
-#include "graphics/gltf/utils.h"
+#include "rupture/graphics/gltf/utils.h"
 
 namespace gltf {
 

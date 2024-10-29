@@ -1,9 +1,9 @@
-#include "graphics/gltf/document.h"
+#include "rupture/graphics/gltf/document.h"
 
 #include <unordered_map>
 #include <vector>
 
-#include "graphics/gltf/utils.h"
+#include "rupture/graphics/gltf/utils.h"
 
 using namespace std::string_literals;
 

@@ -1,10 +1,10 @@
-#include "graphics/gltf/skin.h"
+#include "rupture/graphics/gltf/skin.h"
 
 #include <cstring>
 #include <iostream>
 #include <unordered_map>
 
-#include "graphics/gltf/utils.h"
+#include "rupture/graphics/gltf/utils.h"
 
 namespace gltf {
 

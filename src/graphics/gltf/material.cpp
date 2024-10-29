@@ -1,6 +1,6 @@
-#include "graphics/gltf/material.h"
+#include "rupture/graphics/gltf/material.h"
 
-#include "graphics/gltf/texture.h"
+#include "rupture/graphics/gltf/texture.h"
 
 using namespace std::string_literals;
 

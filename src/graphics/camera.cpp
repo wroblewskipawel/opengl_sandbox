@@ -1,6 +1,6 @@
-#include "graphics/camera.h"
+#include "rupture/graphics/camera.h"
 
-#include "graphics/window.h"
+#include "rupture/graphics/window.h"
 
 Camera::Camera(gl::Window& window, float fovYDeg, float nearClipPlane,
                float farClipPlane)
