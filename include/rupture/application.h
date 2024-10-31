@@ -36,20 +36,17 @@ class Application {
 
     void run();
 
-    virtual void loadResources() = 0;
-    virtual void draw(double dTime) = 0;
+   protected:
+    void quit() { m_isRunning = false; }
+
+    virtual void loadResources(gl::Context& context) = 0;
+    virtual void setupInputCallbacks(gl::Window& window) = 0;
+    virtual void draw(gl::Context& context, double dTime) = 0;
     virtual void update(double dTime) = 0;
 
-   protected:
+   private:
     gl::Window m_window;
     gl::Context m_context;
 
-    std::vector<std::unique_ptr<Camera>> m_cameras;
-    std::vector<gl::handle::Shader> m_shaders;
-    std::vector<gl::handle::Environment> m_environments;
-    std::vector<gl::handle::Lighting> m_lightPacks;
-    std::vector<gl::handle::Model<RigidVertex>> m_rigidModels;
-
-    size_t m_activeCamera;
-    bool m_isRunning;
+    bool m_isRunning{false};
 };

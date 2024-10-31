@@ -80,9 +80,30 @@ class Window {
     }
     void setCursorPosition(glm::dvec2 pos) {
         glfwSetCursorPos(window, pos.x, pos.y);
+        m_cursorPos = pos;
     }
 
-    void setActiveCamera(Camera& camera) {
+    void snapCursorToCenter() {
+        setCursorPosition(glm::dvec2{m_width / 2, m_height / 2});
+    }
+
+    template <typename C, typename... Args>
+    ::handle::Camera addCamera(Args&&... args) {
+        cameras.emplace_back(std::make_unique<C>(std::forward<Args>(args)...));
+        return ::handle::Camera(cameras.size() - 1);
+    }
+
+    const Camera& getCamera(::handle::Camera handle) const {
+        return *cameras[handle.index];
+    }
+
+    Camera& getCamera(::handle::Camera handle) {
+        return *cameras[handle.index];
+    }
+
+    void setActiveCamera(::handle::Camera handle) {
+        auto& camera = *cameras[handle.index];
+
         if (cameraCallbacks.focus.has_value()) {
             cameraCallbacks.focus.value()(GLFW_FALSE);
         }
@@ -219,7 +240,6 @@ class Window {
             focusCallbacks.push_back([this](int focus) {
                 enableUserInputOnFocus(focus == GLFW_TRUE);
             });
-            enableUserInputOnFocus(true);
             glfwFocusWindow(window);
 
             m_dTime = 0.0;
@@ -304,6 +324,7 @@ class Window {
         std::optional<FocusCallback> focus;
         std::optional<ResizeCallback> resize;
     } cameraCallbacks;
+    inline static std::vector<std::unique_ptr<Camera>> cameras;
 
     static void glfwErrorCallback(int err, const char* desc) {
         std::cerr << "[GLFW Error][" << err << "]" << desc << '\n';

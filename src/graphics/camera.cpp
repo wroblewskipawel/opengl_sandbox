@@ -76,16 +76,18 @@ std::optional<FocusCallback> FirstPersonCamera::focusCallback(
     };
 }
 
-TopViewCamera::TopViewCamera(gl::Window& window, glm::vec3 target,
-                             float azimuth, float altitude, float radius,
-                             float fovYDeg, float nearClipPlane,
-                             float farClipPlane)
+TopViewCamera::TopViewCamera(gl::Window& window, bool clampToBorder,
+                             float borderSize, glm::vec3 target, float azimuth,
+                             float altitude, float radius, float fovYDeg,
+                             float nearClipPlane, float farClipPlane)
     : Camera{window, fovYDeg, nearClipPlane, farClipPlane},
       m_target{target},
       m_azimuth{glm::radians(azimuth)},
       m_altitude{glm::clamp(glm::radians(altitude), glm::radians(1.0f),
                             glm::radians(90.0f))},
-      m_radius{glm::clamp(radius, MIN_RADIUS, MAX_RADIUS)} {
+      m_radius{glm::clamp(radius, MIN_RADIUS, MAX_RADIUS)},
+      m_borderSize{borderSize},
+      m_clampToBorder{clampToBorder} {
     updateVectors();
 };
 
@@ -136,14 +138,16 @@ std::optional<CursorPosFunction> TopViewCamera::cursorPosFunction(
     return [this, &window]() {
         auto cursor_pos = window.getCursorPos();
         glm::vec3 offset{};
-        if (cursor_pos.x > window.width() - 1.0f) {
+        if (cursor_pos.x < window.width() &&
+            cursor_pos.x > window.width() - m_borderSize) {
             offset -= m_right;
-        } else if (cursor_pos.x < 1.0f) {
+        } else if (cursor_pos.x > 0.0f && cursor_pos.x < m_borderSize) {
             offset += m_right;
         }
-        if (cursor_pos.y > window.height() - 1.0f) {
+        if (cursor_pos.y < window.height() &&
+            cursor_pos.y > window.height() - m_borderSize) {
             offset -= m_forward;
-        } else if (cursor_pos.y < 1.0f) {
+        } else if (cursor_pos.y > 0.0f && cursor_pos.y < m_borderSize) {
             offset += m_forward;
         }
         if (glm::length(offset) > 0.0f) {
@@ -151,9 +155,11 @@ std::optional<CursorPosFunction> TopViewCamera::cursorPosFunction(
             m_target += offset * static_cast<float>(window.getFrameDeltaTime());
             updateVectors();
         }
-        window.setCursorPosition(
-            glm::clamp(cursor_pos, glm::dvec2{0.0, 0.0},
-                       glm::dvec2{window.width(), window.height()}));
+        if (m_clampToBorder) {
+            window.setCursorPosition(
+                glm::clamp(cursor_pos, glm::dvec2{0.0, 0.0},
+                           glm::dvec2{window.width(), window.height()}));
+        }
     };
 }
 

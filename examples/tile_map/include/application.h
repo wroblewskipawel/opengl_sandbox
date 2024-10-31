@@ -10,7 +10,8 @@ class Demo : public Application {
          uint32_t window_height = DEFAULT_WINDOW_HEIGHT);
 
    private:
-    void loadResources() override;
-    void draw(double dTime) override;
+    void loadResources(gl::Context& context) override;
+    void setupInputCallbacks(gl::Window& window) override;
+    void draw(gl::Context& context, double dTime) override;
     void update(double dTime) override;
 };

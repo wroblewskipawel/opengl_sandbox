@@ -11,6 +11,29 @@
 
 #include "rupture/graphics/window.inl"
 
+namespace handle {
+class Camera {
+   public:
+    static Camera null() { return Camera(std::numeric_limits<size_t>::max()); }
+
+    Camera(const Camera&) = default;
+    Camera(Camera&&) = default;
+
+    Camera& operator=(const Camera&) = default;
+    Camera& operator=(Camera&&) = default;
+
+    bool operator==(const Camera& rhs) const { return index == rhs.index; }
+    bool operator!=(const Camera& rhs) const { return index != rhs.index; }
+
+   private:
+    friend gl::Window;
+    Camera(size_t index) : index{index} {}
+
+    size_t index;
+};
+
+}  // namespace handle
+
 class Camera {
    public:
     Camera(gl::Window& window, float fovYDeg = 60.0f,
@@ -145,7 +168,8 @@ class FirstPersonCamera : public Camera {
 
 class TopViewCamera : public Camera {
    public:
-    TopViewCamera(gl::Window& window,
+    TopViewCamera(gl::Window& window, bool clamToBorder = true,
+                  float borderSize = 10.0f,
                   glm::vec3 target = glm::vec3{0.0f, 0.0f, 0.0f},
                   float azimuth = 45.0f, float altitude = 0.0f,
                   float radius = 10.0f, float fovYDeg = 60.0f,
@@ -182,9 +206,12 @@ class TopViewCamera : public Camera {
     glm::vec3 m_forward;
     glm::vec3 m_target;
 
+    bool m_clampToBorder;
+
     float m_azimuth;
     float m_altitude;
     float m_radius;
+    float m_borderSize;
 
     glm::mat4 view() const override {
         return glm::lookAt(m_position, m_target, up);

@@ -24,48 +24,20 @@ using namespace std::string_literals;
 
 Application::Application(const std::string& title, uint32_t window_width,
                          uint32_t window_height)
-    : m_window{window_width, window_height, title},
-      m_context{m_window},
-      m_isRunning{false} {
+    : m_window{window_width, window_height, title}, m_context{m_window} {
     m_window.registerCloseCallback([this]() mutable { m_isRunning = false; });
-    m_window.registerKeyEventCallback(GLFW_KEY_Q,
-                                      [this](int action, int mods) mutable {
-                                          if (action == GLFW_PRESS) {
-                                              m_isRunning = false;
-                                          }
-                                      });
-    m_cameras.emplace_back(std::make_unique<FirstPersonCamera>(m_window));
-    m_cameras.emplace_back(std::make_unique<TopViewCamera>(m_window));
-    m_activeCamera = 1;
-    m_window.setActiveCamera(*m_cameras[m_activeCamera]);
-    for (auto& camera : m_cameras) {
-        camera->lookAt(glm::vec3{0.5f, 0.5f, 0.5f},
-                       glm::vec3{0.0f, 0.0f, 0.0f});
-    }
-    m_window.registerKeyEventCallback(
-        GLFW_KEY_LEFT_BRACKET, [this](int action, int mods) mutable {
-            if (action == GLFW_PRESS) {
-                m_activeCamera = (m_activeCamera - 1) % m_cameras.size();
-                m_window.setActiveCamera(*m_cameras[m_activeCamera]);
-            }
-        });
-    m_window.registerKeyEventCallback(
-        GLFW_KEY_RIGHT_BRACKET, [this](int action, int mods) mutable {
-            if (action == GLFW_PRESS) {
-                m_activeCamera = (m_activeCamera + 1) % m_cameras.size();
-                m_window.setActiveCamera(*m_cameras[m_activeCamera]);
-            }
-        });
-
-    m_isRunning = true;
 }
 
 void Application::run() {
-    loadResources();
+    loadResources(m_context);
+    setupInputCallbacks(m_window);
+
+    m_window.snapCursorToCenter();
+    m_window.enableUserInputOnFocus(true);
 
     std::chrono::steady_clock clock{};
     auto lastTime = clock.now();
-
+    m_isRunning = true;
     while (m_isRunning) {
         auto currenTime = clock.now();
         double dTime =
@@ -75,7 +47,7 @@ void Application::run() {
         m_window.handleInput(dTime);
 
         m_context.beginFrame();
-        draw(dTime);
+        draw(m_context, dTime);
         m_context.endFrame();
 
         update(dTime);
