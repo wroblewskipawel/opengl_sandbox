@@ -74,10 +74,10 @@ class VertexBuffer {
                        size_t stagingBufferSize) {
         glCreateBuffers(2, reinterpret_cast<GLuint*>(&m_glBuffers));
 
-        glNamedBufferStorage(m_glBuffers.vertex,
-                             vertexBufferSize * sizeof(Vert), NULL, GL_NONE);
-        glNamedBufferStorage(m_glBuffers.index,
-                             indexBufferSize * sizeof(uint32_t), NULL, GL_NONE);
+        glNamedBufferData(m_glBuffers.vertex, vertexBufferSize * sizeof(Vert),
+                          NULL, GL_STATIC_COPY);
+        glNamedBufferData(m_glBuffers.index, indexBufferSize * sizeof(uint32_t),
+                          NULL, GL_STATIC_COPY);
 
         GLuint stagingBuffer{};
         glCreateBuffers(1, &stagingBuffer);
