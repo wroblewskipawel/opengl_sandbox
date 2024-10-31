@@ -129,10 +129,12 @@ void Shader::interfaceQuery() {
         m_blockBindings.emplace(glBuffer, index);
     }
 
+#ifndef NDEBUG
     for (const auto& [name, binding] : m_blockBindings) {
         std::cout << "Uniform: " << name << " ; Binding: " << binding
                   << std::endl;
     }
+#endif
 
     GLint uniformCount{};
     glGetProgramInterfaceiv(m_glProgram, GL_UNIFORM, GL_ACTIVE_RESOURCES,
@@ -160,10 +162,12 @@ void Shader::interfaceQuery() {
             }
         }
 
+#ifndef NDEBUG
         for (const auto& [name, location] : m_uniformLocations) {
             std::cout << "Uniform: " << name << " ; Location: " << location
                       << std::endl;
         }
+#endif
     }
 }
 
