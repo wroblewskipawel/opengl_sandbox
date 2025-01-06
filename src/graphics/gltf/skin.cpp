@@ -2,13 +2,21 @@
 
 #include <cstring>
 #include <iostream>
+#include <queue>
 #include <unordered_map>
 
 #include "rupture/graphics/gltf/utils.h"
 
 namespace gltf {
 
-Skin::Skin(const fx::gltf::Document& document, const fx::gltf::Skin& skin) {
+Skin::Skin(const fx::gltf::Document& document, const fx::gltf::Skin& skin,
+           const std::unordered_map<uint32_t, uint32_t>& parentMap,
+           const std::vector<glm::mat4>& globalTransforms,
+           const std::vector<glm::mat4>& inverseTransforms) {
+    m_rootTransform = skin.skeleton != -1
+                          ? globalTransforms[parentMap.at(skin.skeleton)]
+                          : glm::mat4{1.0f};
+
     std::unordered_map<uint32_t, glm::mat4> bindMap{};
     if (skin.inverseBindMatrices != -1) {
         const auto& bindAccesor = document.accessors[skin.inverseBindMatrices];
@@ -24,28 +32,36 @@ Skin::Skin(const fx::gltf::Document& document, const fx::gltf::Skin& skin) {
         throw std::runtime_error("Incomplete skin data");
     }
 
-    for (size_t i{0}; i < skin.joints.size(); i++) {
-        m_meshNodeIndexMap.emplace(skin.joints[i], static_cast<uint32_t>(i));
+    for (size_t i = 0; i < skin.joints.size(); i++) {
+        m_skinIndexJointMap.emplace(skin.joints[i], i);
     }
 
-    std::stack<std::pair<int32_t, Joint&>> to_visit;
+    std::vector<glm::mat4> bindPose{skin.joints.size(), glm::mat4{1.0f}};
+
+    std::queue<int32_t> to_visit;
     m_joints.reserve(skin.joints.size());
-    to_visit.push({skin.skeleton, m_joints.emplace_back()});
+    to_visit.push(skin.skeleton);
     while (!to_visit.empty()) {
-        auto [node, joint] = to_visit.top();
+        auto currentNodeId = to_visit.front();
         to_visit.pop();
-        if (node != -1) {
-            uint32_t nodeID{static_cast<uint32_t>(node)};
-            auto node = document.nodes[nodeID];
-            joint.inverseBind = bindMap.at(nodeID);
-            std::memcpy(&joint.r, &node.rotation, sizeof(glm::quat));
-            std::memcpy(&joint.s, &node.scale, sizeof(glm::vec3));
-            std::memcpy(&joint.t, &node.translation, sizeof(glm::vec3));
-            joint.firstChild = m_joints.size();
-            joint.numChildren = node.children.size();
-            joint.nodeId = nodeID;
-            for (auto child : node.children) {
-                to_visit.push({child, m_joints.emplace_back()});
+        if (currentNodeId != -1) {
+            auto& joint = m_joints.emplace_back();
+            joint.nodeId = static_cast<uint32_t>(currentNodeId);
+            m_meshNodeIndexMap.emplace(joint.nodeId, m_joints.size() - 1);
+
+            auto gltfNode = document.nodes[joint.nodeId];
+            std::memcpy(&joint.r, &gltfNode.rotation, sizeof(glm::quat));
+            std::memcpy(&joint.s, &gltfNode.scale, sizeof(glm::vec3));
+            std::memcpy(&joint.t, &gltfNode.translation, sizeof(glm::vec3));
+
+            joint.firstChild = m_joints.size() + to_visit.size();
+            joint.numChildren = gltfNode.children.size();
+            joint.inverseBind = bindMap.at(joint.nodeId);
+            joint.name = gltfNode.name;
+
+            const auto& children = gltfNode.children;
+            for (const auto& child : children) {
+                to_visit.push(child);
             }
         }
     }

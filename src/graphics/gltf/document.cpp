@@ -1,5 +1,7 @@
 #include "rupture/graphics/gltf/document.h"
 
+#include <glm/gtc/type_ptr.hpp>
+#include <queue>
 #include <unordered_map>
 #include <vector>
 
@@ -21,6 +23,64 @@ Document::Document(const std::filesystem::path& path) {
         }
     }();
     loadDocument(path, document);
+}
+
+std::unordered_map<uint32_t, uint32_t> Document::getNodeParentMap(
+    const fx::gltf::Document& document) {
+    std::unordered_map<uint32_t, uint32_t> parentMap{};
+    for (size_t i{0}; i < document.nodes.size(); i++) {
+        const auto& node = document.nodes[i];
+        for (const auto& child : node.children) {
+            parentMap.emplace(static_cast<uint32_t>(child), static_cast<uint32_t>(i));
+        }
+    }
+    return parentMap;
+}
+
+Document::NodeTransforms Document::getNodeTransforms(
+    const fx::gltf::Document& document) {
+    std::vector<glm::mat4> globalTransform{document.nodes.size(),
+                                           glm::mat4{1.0f}};
+
+    std::queue<int32_t> to_visit;
+    to_visit.push(0);
+    while (!to_visit.empty()) {
+        auto currentNodeId = to_visit.front();
+        to_visit.pop();
+        if (currentNodeId >= 0) {
+            auto gltfNode = document.nodes[currentNodeId];
+            auto nodeMatrix = [gltfNode]() {
+                auto nodeMatrix = glm::make_mat4(gltfNode.matrix.data());
+                if (nodeMatrix == glm::mat4{1.0f}) {
+                    glm::quat r;
+                    glm::vec3 s;
+                    glm::vec3 t;
+                    std::memcpy(&r, &gltfNode.rotation, sizeof(glm::quat));
+                    std::memcpy(&s, &gltfNode.scale, sizeof(glm::vec3));
+                    std::memcpy(&t, &gltfNode.translation, sizeof(glm::vec3));
+                    return glm::translate(glm::mat4{1.0f}, t) *
+                           glm::mat4_cast(r) * glm::scale(glm::mat4{1.0f}, s);
+                }
+                return nodeMatrix;
+            }();
+            globalTransform[currentNodeId] *= nodeMatrix;
+            for (const auto childNodeId : gltfNode.children) {
+                globalTransform[childNodeId] = globalTransform[currentNodeId];
+            }
+
+            const auto& children = gltfNode.children;
+            for (const auto& child : children) {
+                to_visit.push(child);
+            }
+        }
+    }
+
+    std::vector<glm::mat4> inverseTransform{globalTransform.size()};
+    std::transform(globalTransform.begin(), globalTransform.end(),
+                   inverseTransform.begin(),
+                   [](const glm::mat4& mat) { return glm::inverse(mat); });
+
+    return {globalTransform, inverseTransform};
 }
 
 void Document::loadDocument(const std::filesystem::path& path,
@@ -49,29 +109,55 @@ void Document::loadMaterials(const std::filesystem::path& path,
     }
 }
 
+class AnimParserHelper {
+   public:
+    void registerSkin(size_t skinIndex, const fx::gltf::Skin& skin) {
+        m_skinNodesOrdered.emplace(skinIndex, Skin::getGltfSortedNodes(skin));
+    }
+
+    void registerAnimation(size_t animationIndex,
+                           const fx::gltf::Animation& annimation) {
+        m_animationNodesOrdered.emplace(
+            animationIndex, Animation::getGltfSortedNodes(annimation));
+    }
+
+    bool isAnimationApplicable(size_t skinIndex, size_t animationIndex) const {
+        const auto& skinNodes = m_skinNodesOrdered.at(skinIndex);
+        const auto& animNodes = m_animationNodesOrdered.at(animationIndex);
+        return (std::includes(skinNodes.begin(), skinNodes.end(),
+                              animNodes.begin(), animNodes.end()));
+    }
+
+   private:
+    std::unordered_map<size_t, std::vector<uint32_t>> m_skinNodesOrdered{};
+    std::unordered_map<size_t, std::vector<uint32_t>> m_animationNodesOrdered{};
+};
+
 void Document::loadAnimations(const fx::gltf::Document& document,
                               std::unordered_map<uint32_t, uint32_t>& skinMap) {
-    std::unordered_map<size_t, std::vector<uint32_t>> skinNodes{};
+    auto parentMap = getNodeParentMap(document);
+    auto nodeTransforms = getNodeTransforms(document);
+
+    auto assocHelper = AnimParserHelper{};
     auto& skins = at<Skin>();
     for (size_t i{0}; i < document.skins.size(); i++) {
         const auto& skin = document.skins[i];
-        skinNodes.emplace(i, Skin::getGltfSortedNodes(skin));
-        skins.emplace_back(document, skin);
+        assocHelper.registerSkin(i, skin);
+        skins.emplace_back(document, skin, parentMap,
+                           nodeTransforms.globalTransform,
+                           nodeTransforms.inverseTransform);
     }
 
     for (size_t i{0}; i < document.animations.size(); i++) {
         const auto& animation = document.animations[i];
-        auto animNodes = Animation::getGltfSortedNodes(animation);
-        for (auto& [skinID, nodes] : skinNodes) {
-            if (std::includes(nodes.begin(), nodes.end(), animNodes.begin(),
-                              animNodes.end())) {
-                auto orderedNodes =
-                    Skin::getInternalOrdering(document, document.skins[skinID]);
+        assocHelper.registerAnimation(i, animation);
+        for (size_t skinID{0}; skinID < skins.size(); skinID++) {
+            if (assocHelper.isAnimationApplicable(skinID, i)) {
                 auto animName = !animation.name.empty()
                                     ? animation.name
                                     : "Animation."s + std::to_string(i);
                 skins[skinID].registerAnimation(std::move(animName), document,
-                                                animation, orderedNodes);
+                                                animation);
                 continue;
             }
         }

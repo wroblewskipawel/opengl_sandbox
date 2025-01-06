@@ -10,7 +10,7 @@ namespace gltf {
 
 Animation::Animation(
     const fx::gltf::Document& document, const fx::gltf::Animation& animation,
-    const std::unordered_map<int32_t, uint32_t>& skinNodeOrdering) {
+    const std::unordered_map<uint32_t, uint32_t>& skinNodeOrdering) {
     m_targets.resize(skinNodeOrdering.size());
     for (size_t i{0}; i < animation.channels.size(); i++) {
         const auto& channel = animation.channels[i];
@@ -42,6 +42,22 @@ Animation::Animation(
                 break;
         }
     }
+
+    auto getBufferViewEndTime = [&](const std::optional<BufferView>& view) {
+        double endTime{0.0f};
+        if (view.has_value()) {
+            endTime = m_translationBuffer.timeBuffer[(*view).timeOffset +
+                                                     (*view).samples - 1];
+        }
+        return endTime;
+    };
+
+    for(const auto& target: m_targets) {
+        auto endTime = std::max(
+            {getBufferViewEndTime(target.t), getBufferViewEndTime(target.r),
+             getBufferViewEndTime(target.s)});
+        m_duration = std::max(m_duration, endTime);
+    }
 }
 
 Animation::BufferView Animation::loadSamplerData(
@@ -67,31 +83,31 @@ Animation::BufferView Animation::loadSamplerData(
     view.samples = inputData.size();
     switch (property) {
         case Property::Translation: {
-            view.inputOffset = m_translationBuffer.timeBuffer.size();
+            view.timeOffset = m_translationBuffer.timeBuffer.size();
             std::copy(inputData.begin(), inputData.end(),
                       std::back_inserter(m_translationBuffer.timeBuffer));
             auto outputData = gltf::readContiguous<glm::vec3>(document, output);
-            view.outputOffset = m_translationBuffer.targetBuffer.size();
+            view.targetOffset = m_translationBuffer.targetBuffer.size();
             std::copy(outputData.begin(), outputData.end(),
                       std::back_inserter(m_translationBuffer.targetBuffer));
             break;
         }
         case Property::Rotation: {
-            view.inputOffset = m_rotationBuffer.timeBuffer.size();
+            view.timeOffset = m_rotationBuffer.timeBuffer.size();
             std::copy(inputData.begin(), inputData.end(),
                       std::back_inserter(m_rotationBuffer.timeBuffer));
             auto outputData = gltf::readContiguous<glm::quat>(document, output);
-            view.outputOffset = m_rotationBuffer.targetBuffer.size();
+            view.targetOffset = m_rotationBuffer.targetBuffer.size();
             std::copy(outputData.begin(), outputData.end(),
                       std::back_inserter(m_rotationBuffer.targetBuffer));
             break;
         }
         case Property::Scale: {
-            view.inputOffset = m_scaleBuffer.timeBuffer.size();
+            view.timeOffset = m_scaleBuffer.timeBuffer.size();
             std::copy(inputData.begin(), inputData.end(),
                       std::back_inserter(m_scaleBuffer.timeBuffer));
             auto outputData = gltf::readContiguous<glm::vec3>(document, output);
-            view.outputOffset = m_scaleBuffer.targetBuffer.size();
+            view.targetOffset = m_scaleBuffer.targetBuffer.size();
             std::copy(outputData.begin(), outputData.end(),
                       std::back_inserter(m_scaleBuffer.targetBuffer));
             break;

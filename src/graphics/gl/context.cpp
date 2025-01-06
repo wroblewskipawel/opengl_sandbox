@@ -18,6 +18,14 @@ Context::Context(Window& window)
     createDefaultMaterial();
 };
 
+gl::handle::Shader Context::loadShader(const std::filesystem::path& shaderDir) {
+    auto& shaders = at<Shader>();
+    shaders.emplace_back(shaderDir);
+    auto shaderHandle = handle::Shader(shaders.size() - 1);
+    m_shaderMap.emplace(shaderDir.stem().string(), shaderHandle);
+    return shaderHandle;
+}
+
 void Context::loadShaders(
     const std::vector<std::filesystem::path>& shaderDirs) {
     auto& shaders = at<Shader>();
@@ -118,38 +126,53 @@ void Context::beginFrame() {
 
 void Context::endFrame() { window.display(); }
 
-void Context::setShaderState(handle::Shader handle) {
+
+Shader& Context::setShaderState(handle::Shader handle) {
     auto& shader = useShader(handle);
 
     shader.setUniformMatrix4(Shader::CAMERA_MATRIX_UNIFORM,
                              m_frameState.currentCameraMatrix);
-    shader.setUniformVec3(Shader::CAMERA_POS_UNIFORM,
-                          m_frameState.currentCameraPosition);
+
+    if (shader.hasUniform(Shader::CAMERA_POS_UNIFORM)) {
+        shader.setUniformVec3(Shader::CAMERA_POS_UNIFORM,
+                              m_frameState.currentCameraPosition);
+    }
 
     if (m_frameState.lighting != handle::Lighting::null()) {
         auto& lighPack = at<LightPack>()[m_frameState.lighting.index];
-        shader.bindUniformBlock(lighPack.blockInfo());
+        if (shader.hasBlock(lighPack.blockName())) {
+            shader.bindUniformBlock(lighPack.blockInfo());
+        }
     }
     if (m_frameState.materialPack != handle::MaterialPack::null()) {
         auto& materialPack =
             at<MaterialPack>()[m_frameState.materialPack.index];
-        shader.bindUniformBlock(materialPack.blockInfo());
+        if (shader.hasBlock(materialPack.blockName())) {
+            shader.bindUniformBlock(materialPack.blockInfo());
+        }
     }
     if (m_frameState.environment != handle::Environment::null()) {
         auto& environment = at<Environment>()[m_frameState.environment.index];
         auto irradianceTexture = environment.irradianceMap().texture();
         auto specularTexture = environment.specularMap().texture();
 
-        glBindTextureUnit(0, irradianceTexture);
-        shader.setUniformI(Shader::IRRADIANCE_CUBE_MAP, 0);
+        if (shader.hasUniform(Shader::IRRADIANCE_CUBE_MAP)) {
+            glBindTextureUnit(0, irradianceTexture);
+            shader.setUniformI(Shader::IRRADIANCE_CUBE_MAP, 0);
+        }
 
-        glBindTextureUnit(1, specularTexture);
-        shader.setUniformI(Shader::SPECULAR_CUBE_MAP, 1);
+        if (shader.hasUniform(Shader::SPECULAR_CUBE_MAP)) {
+            glBindTextureUnit(1, specularTexture);
+            shader.setUniformI(Shader::SPECULAR_CUBE_MAP, 1);
+        }
 
-        glBindTextureUnit(2, m_brdfMap.texture());
-        shader.setUniformI(Shader::BRDF_MAP, 2);
+        if (shader.hasUniform(Shader::BRDF_MAP)) {
+            glBindTextureUnit(2, m_brdfMap.texture());
+            shader.setUniformI(Shader::BRDF_MAP, 2);
+        }
     }
-};
+    return shader;
+}
 
 void Context::setEnvironment(handle::Environment handle) {
     m_frameState.environment = handle;
