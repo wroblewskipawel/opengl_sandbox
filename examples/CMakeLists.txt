@@ -12,3 +12,4 @@ endfunction()
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/pbr_viewer/)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tile_map/)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/model_animation/)

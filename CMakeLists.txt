@@ -12,6 +12,8 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_Install OFF CACHE INTERNAL "")
 
+add_compile_definitions(GLM_FORCE_QUAT_DATA_XYZW)
+
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glm/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glad/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glfw/)

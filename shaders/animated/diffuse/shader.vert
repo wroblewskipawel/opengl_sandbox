@@ -35,11 +35,10 @@ void main() {
     vs_out.tang = tang;
     vs_out.tex = tex;
     vs_out.draw_id = gl_DrawID;
-    // mat4 skin_matrix = 
-    //       weights.x * joint_matrices.joint[joints.x] 
-    //     + weights.y * joint_matrices.joint[joints.y] 
-    //     + weights.z * joint_matrices.joint[joints.z] 
-    //     + weights.w * joint_matrices.joint[joints.w];
-    mat4 skin_matrix = mat4(1.0);
+    mat4 skin_matrix = 
+          weights.x * joint_matrices.joint[joints.x] 
+        + weights.y * joint_matrices.joint[joints.y] 
+        + weights.z * joint_matrices.joint[joints.z] 
+        + weights.w * joint_matrices.joint[joints.w];
     gl_Position = proj_view * model * skin_matrix * vec4(pos, 1.0);
 };

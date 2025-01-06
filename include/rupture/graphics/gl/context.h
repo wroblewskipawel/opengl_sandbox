@@ -40,6 +40,8 @@ class Context {
 
     ~Context() = default;
 
+    gl::handle::Shader Context::loadShader(
+        const std::filesystem::path& shaderDir);
     void loadShaders(const std::vector<std::filesystem::path>& shaderDirs);
     void loadDocument(const gltf::Document& document);
 
@@ -86,7 +88,7 @@ class Context {
         }
     };
 
-    void setShaderState(handle::Shader handle);
+    Shader& setShaderState(handle::Shader handle);
     void setEnvironment(handle::Environment handle);
     void setLighting(handle::Lighting handle);
 

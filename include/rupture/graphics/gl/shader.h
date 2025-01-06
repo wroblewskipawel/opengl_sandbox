@@ -100,7 +100,7 @@ class Shader {
         }
     }
 
-    void bindUniformBlock(const UniformBlock::Info& blockInfo) {
+    Shader& bindUniformBlock(const UniformBlock::Info& blockInfo) {
         if (m_glProgram == currnetProgram) {
             glBindBufferBase(GL_UNIFORM_BUFFER,
                              m_blockBindings.at(blockInfo.name),
@@ -108,47 +108,61 @@ class Shader {
         } else {
             throw std::logic_error("OpenGL program not currently in use");
         }
+        return *this;
     }
 
-    void setUniformF(const std::string& name, float value) {
+    Shader& setUniformF(const std::string& name, float value) {
         if (m_glProgram == currnetProgram) {
             glUniform1f(m_uniformLocations.at(name), value);
         } else {
             throw std::logic_error("OpenGL Program not currently in use");
         }
+        return *this;
     }
 
-    void setUniformI(const std::string& name, GLint value) {
+    Shader& setUniformI(const std::string& name, GLint value) {
         if (m_glProgram == currnetProgram) {
             glUniform1i(m_uniformLocations.at(name), value);
         } else {
             throw std::logic_error("OpenGL Program not currently in use");
         }
+        return *this;
     }
 
-    void setUniformUI(const std::string& name, GLuint value) {
+    Shader& setUniformUI(const std::string& name, GLuint value) {
         if (m_glProgram == currnetProgram) {
             glUniform1ui(m_uniformLocations.at(name), value);
         } else {
             throw std::logic_error("OpenGL program not currently in use");
         }
+        return *this;
     }
 
-    void setUniformMatrix4(const std::string& name, const glm::mat4& value) {
+    Shader& setUniformMatrix4(const std::string& name, const glm::mat4& value) {
         if (m_glProgram == currnetProgram) {
             glUniformMatrix4fv(m_uniformLocations.at(name), 1, GL_FALSE,
                                glm::value_ptr(value));
         } else {
             throw std::logic_error("OpenGL program not currently in use");
         }
+        return *this;
     }
 
-    void setUniformVec3(const std::string& name, const glm::vec3& value) {
+    Shader& setUniformVec3(const std::string& name, const glm::vec3& value) {
         if (m_glProgram == currnetProgram) {
             glUniform3fv(m_uniformLocations.at(name), 1, glm::value_ptr(value));
         } else {
             throw std::logic_error("OpenGL program not currently in use");
         }
+        return *this;
+    }
+
+    bool hasUniform(const std::string& name) const {
+        return m_uniformLocations.find(name) != m_uniformLocations.end();
+    }
+
+    bool hasBlock(const std::string& name) const {
+        return m_blockBindings.find(name) != m_blockBindings.end();
     }
 
     void use() {

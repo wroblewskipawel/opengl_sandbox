@@ -61,6 +61,15 @@ class Document {
     const std::string& name() const { return m_name; }
 
    private:
+    struct NodeTransforms {
+        std::vector<glm::mat4> globalTransform;
+        std::vector<glm::mat4> inverseTransform;
+    };
+
+    std::unordered_map<uint32_t, uint32_t> getNodeParentMap(
+        const fx::gltf::Document& document);
+    NodeTransforms getNodeTransforms(const fx::gltf::Document& document);
+
     void loadDocument(const std::filesystem::path& path,
                       const fx::gltf::Document& document);
     void loadMaterials(const std::filesystem::path& path,

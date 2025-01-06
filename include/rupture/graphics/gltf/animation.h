@@ -23,7 +23,7 @@ class Animation {
    public:
     Animation(const fx::gltf::Document& document,
               const fx::gltf::Animation& animation,
-              const std::unordered_map<int32_t, uint32_t>& skinNodeOrdering);
+              const std::unordered_map<uint32_t, uint32_t>& skinNodeOrdering);
 
     Animation(const Animation&) = default;
     Animation(Animation&&) = default;
@@ -35,6 +35,7 @@ class Animation {
     friend class Scene;
     friend class Skin;
     friend class Document;
+    friend class AnimParserHelper;
 
     static std::string getGltfUID(const std::filesystem::path& path,
                                   const fx::gltf::Document& document,
@@ -70,8 +71,8 @@ class Animation {
     };
 
     struct BufferView {
-        uint32_t inputOffset;
-        uint32_t outputOffset;
+        uint32_t timeOffset;
+        uint32_t targetOffset;
         uint32_t samples;
         Interpolation mode;
     };
@@ -87,13 +88,11 @@ class Animation {
                      : glm::vec3{0.0f};
         auto r = node.r.has_value()
                      ? m_rotationBuffer.sample(node.r.value(), time)
-                     : glm::quat{1.0f, 0.0f, 0.0f, 0.0f};
+                     : glm::quat{0.0f, 0.0f, 0.0f, 1.0f};
         auto s = node.s.has_value() ? m_scaleBuffer.sample(node.s.value(), time)
                                     : glm::vec3{1.0f};
-        auto angle = glm::angle(r);
-        auto axis = glm::axis(r);
-        return glm::scale(
-            glm::rotate(glm::translate(glm::mat4{1.0f}, t), angle, axis), s);
+        return glm::translate(glm::mat4{1.0f}, t) * glm::mat4_cast(r) *
+               glm::scale(glm::mat4{1.0f}, s);
     }
 
     std::vector<glm::mat4> getJointTransforms(float time) const {
@@ -118,47 +117,64 @@ class Animation {
 
         Comp sample(const BufferView& view, float time) const {
             auto offset = std::distance(
-                timeBuffer.begin() + view.inputOffset,
+                timeBuffer.begin() + view.timeOffset,
                 std::lower_bound(
-                    timeBuffer.begin() + view.inputOffset,
-                    timeBuffer.begin() + view.inputOffset + view.samples,
-                    time));
+                    timeBuffer.begin() + view.timeOffset,
+                    timeBuffer.begin() + view.timeOffset + view.samples, time));
             if (offset != view.samples && offset > 0) {
-                float t = (time - timeBuffer[view.inputOffset + offset - 1]) /
-                          (timeBuffer[view.inputOffset + offset] -
-                           timeBuffer[view.inputOffset + offset - 1]);
                 switch (view.mode) {
                     case Interpolation::Step:
-                        return targetBuffer[view.outputOffset + offset - 1];
+                        return targetBuffer[view.targetOffset + offset - 1];
                     case Interpolation::Linear: {
+                        float t =
+                            (time - timeBuffer[view.timeOffset + offset - 1]) /
+                            (timeBuffer[view.timeOffset + offset] -
+                             timeBuffer[view.timeOffset + offset - 1]);
+                        auto prev =
+                            targetBuffer[view.targetOffset + offset - 1];
+                        auto next = targetBuffer[view.targetOffset + offset];
                         if constexpr (std::is_same<glm::quat, Comp>::value) {
-                            return glm::slerp(
-                                targetBuffer[view.outputOffset + offset - 1],
-                                targetBuffer[view.outputOffset + offset], t);
+                            auto dot = glm::dot(prev, next);
+                            if (dot < 0.0) {
+                                next = -next;
+                                dot = -dot;
+                            }
+                            if (dot > 0.9995) {
+                                return glm::normalize(glm::mix(prev, next, t));
+                            }
+
+                            auto theta0 = glm::acos(dot);
+                            auto theta = theta0 * t;
+                            auto sinTheta0 = glm::sin(theta0);
+                            auto sinTheta = glm::sin(theta);
+                            auto sPrev =
+                                glm::cos(theta) - dot * sinTheta / sinTheta0;
+                            auto sNext = sinTheta / sinTheta0;
+                            return glm::normalize(prev * sPrev + next * sNext);
                         } else {
-                            return glm::mix(
-                                targetBuffer[view.outputOffset + offset - 1],
-                                targetBuffer[view.outputOffset + offset], t);
+                            return glm::mix(prev, next, t);
                         }
                     }
                     default:
                         throw std::runtime_error(
-
                             "Interpolation method not implemented");
                 }
             } else if (offset == 0) {
-                return targetBuffer[view.outputOffset];
+                return targetBuffer[view.targetOffset];
             } else {
-                return targetBuffer[view.outputOffset + offset - 1];
+                return targetBuffer[view.targetOffset + offset - 1];
             }
         }
     };
+
+    double duration() const { return m_duration; }
 
     AnimationBuffer<glm::vec3> m_translationBuffer;
     AnimationBuffer<glm::vec3> m_scaleBuffer;
     AnimationBuffer<glm::quat> m_rotationBuffer;
 
     std::vector<Target> m_targets;
+    double m_duration;
 };
 
 }  // namespace gltf
