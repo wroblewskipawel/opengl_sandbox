@@ -16,6 +16,7 @@ Context::Context(Window& window)
       m_nullTexture{gltf::Texture::null(), 1},
       m_brdfMap{m_quadRenderer.createBRDFMap(512, 512)} {
     createDefaultMaterial();
+    createCommandBuffers();
 };
 
 gl::handle::Shader Context::loadShader(const std::filesystem::path& shaderDir) {
@@ -50,6 +51,14 @@ void Context::createDefaultMaterial() {
     nullBuilder.setMaterialData(0, gltf::pbrMaterial::null(), 0, textures,
                                 m_nullTexture);
     materialPacks.emplace_back(MaterialPack{std::move(nullBuilder)});
+}
+
+void Context::createCommandBuffers() {
+    m_commands.insert<CommandBufferMap<RigidVertex, glm::mat4>>();
+    m_commands.insert<CommandBufferMap<RigidVertex, glm::vec3>>();
+    m_commands.insert<CommandBufferMap<SkinVertex, glm::mat4>>();
+    m_commands.insert<CommandBufferMap<glm::vec3, DebugInstance>>();
+    m_commands.insert<CommandBufferMap<DebugVertex, DebugInstance>>();
 }
 
 void Context::loadDocumentMaterials(
@@ -124,8 +133,19 @@ void Context::beginFrame() {
     m_frameState.lighting = handle::Lighting::null();
 };
 
-void Context::endFrame() { window.display(); }
+void Context::endFrame() { 
+    flushCommandBuffers();
+    window.display();
+}
 
+void Context::flushCommandBuffers() {
+    processCommands<RigidVertex, glm::mat4>();
+    processCommands<RigidVertex, glm::vec3>();
+    processCommands<SkinVertex, glm::mat4>();
+    processCommands<glm::vec3, DebugInstance>();
+    processCommands<DebugVertex, DebugInstance>();
+    m_commands.forEach([](auto& commands) { commands.clear(); });
+}
 
 Shader& Context::setShaderState(handle::Shader handle) {
     auto& shader = useShader(handle);

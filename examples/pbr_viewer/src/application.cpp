@@ -13,7 +13,7 @@ void Demo::loadResources(gl::Context& context) {
         context.getShader(shader::nameOf(shader::pbr::COOK_TORRANCE)));
 
     gltf::Document waterBottle{
-        "assets/gltf/WaterBottle/glTF/WaterBottle.gltf"s};
+        "assets/WaterBottle/glTF/WaterBottle.gltf"s};
     context.loadDocument(waterBottle);
 
     m_rigidModels.emplace_back(
@@ -71,7 +71,7 @@ void Demo::draw(gl::Context& context, double dTime) {
     context.setEnvironment(m_environments[0]);
     context.setLighting(m_lightPacks[0]);
     context.setShaderState(m_shaders[0]);
-    context.draw(m_rigidModels[0],
+    context.drawDeferred(m_rigidModels[0],
                    glm::rotate(glm::mat4{1.0f}, glm::radians(90.0f),
                                glm::vec3{1.0f, 0.0f, 0.0f}));
 }

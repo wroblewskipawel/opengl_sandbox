@@ -300,6 +300,30 @@ class Renderer : public RendererState {
         m_drawIndirectBuffer.bind();
     }
 
+    RenderCommand<VertexType, InstanceType> prepareCommand(
+        const Model<VertexType>& model, const InstanceType& instance) {
+        size_t drawInfoCount{model.drawInfos.size()};
+
+        std::vector<InstanceType> instanceData(drawInfoCount, instance);
+
+        std::vector<GLuint> materialIndices{};
+        materialIndices.reserve(drawInfoCount);
+
+        std::vector<command::Draw> commands{};
+        commands.reserve(drawInfoCount);
+
+        uint32_t baseInstance{0};
+        for (auto& drawInfo : model.drawInfos) {
+            commands.emplace_back(drawInfo.getCommand(1, baseInstance++));
+            materialIndices.emplace_back(drawInfo.materialIndex);
+        }
+
+        RenderCommand<VertexType, InstanceType> renderCommand{
+            commands, materialIndices, instanceData};
+
+        return renderCommand;
+    }
+
     void drawSingle(const Model<VertexType>& model,
                     const InstanceType& instance) {
         size_t drawInfoCount{model.drawInfos.size()};

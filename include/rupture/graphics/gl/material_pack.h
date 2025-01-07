@@ -7,11 +7,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include "magic_enum.hpp"
 #include "rupture/graphics/gl/block/std140.h"
 #include "rupture/graphics/gl/shader.h"
 #include "rupture/graphics/gl/texture.h"
 #include "rupture/graphics/gltf/material.h"
-#include "magic_enum.hpp"
 
 const size_t MATERIAL_PACK_SIZE = 16;
 
@@ -45,6 +45,9 @@ class MaterialPack {
 
    private:
     friend gl::Context;
+
+    friend struct std::hash<MaterialPack>;
+
     MaterialPack(size_t index) : index{index} {};
 
     size_t index;
@@ -203,3 +206,13 @@ using PackBuilder = pbrMaterialPackBuilder<MATERIAL_PACK_SIZE>;
 using MaterialPack = pbrMaterialPack<MATERIAL_PACK_SIZE>;
 
 }  // namespace gl
+
+namespace std {
+template <>
+struct hash<gl::handle::MaterialPack> {
+    size_t operator()(const gl::handle::MaterialPack& value) const {
+        return std::hash<size_t>{}(value.index);
+    }
+};
+
+}  // namespace std

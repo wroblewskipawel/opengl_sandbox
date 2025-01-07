@@ -67,7 +67,7 @@ void Demo::draw(gl::Context& context, double dTime) {
     context.setLighting(m_lightPack);
     context.setShaderState(m_shader).bindUniformBlock(
         m_jointUniform.blockInfo());
-    context.draw(m_skinModel, glm::identity<glm::mat4>());
+    context.drawDeferred(m_skinModel, glm::identity<glm::mat4>());
 }
 
 void Demo::update(double dTime) {

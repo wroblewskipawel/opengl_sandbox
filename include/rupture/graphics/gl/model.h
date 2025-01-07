@@ -51,6 +51,9 @@ class VertexBuffer {
    private:
     friend gl::Context;
 
+    template <typename V>
+    friend struct std::hash;
+
     VertexBuffer(uint32_t index) : index{index} {};
     uint32_t index;
 };
@@ -71,6 +74,10 @@ class Model {
 
    private:
     friend gl::Context;
+
+    template <typename V>
+    friend struct std::hash;
+
     Model(size_t index) : index{index} {};
 
     size_t index;
@@ -114,3 +121,19 @@ struct Model {
 };
 
 }  // namespace gl
+
+namespace std {
+template <typename Vert>
+struct hash<gl::handle::VertexBuffer<Vert>> {
+    size_t operator()(const gl::handle::VertexBuffer<Vert>& value) const {
+        return std::hash<uint32_t>{}(value.index);
+    }
+};
+
+template <typename Vert>
+struct hash<gl::handle::Model<Vert>> {
+    size_t operator()(const gl::handle::Model<Vert>& value) const {
+        return std::hash<size_t>{}(value.index);
+    }
+};
+}  // namespace std
