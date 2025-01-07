@@ -13,7 +13,6 @@
 #include "rupture/graphics/camera.h"
 #include "rupture/graphics/gl/context.h"
 #include "rupture/graphics/gl/framebuffer.h"
-#include "rupture/graphics/gl/renderer.h"
 #include "rupture/graphics/gl/uniform.h"
 #include "rupture/graphics/window.h"
 

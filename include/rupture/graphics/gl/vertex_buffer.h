@@ -67,7 +67,7 @@ class VertexBuffer {
 
    private:
     template <typename, typename, size_t, size_t>
-    friend class Renderer;
+    friend class MeshRenderer;
 
     void createBuffers(const std::vector<gltf::Mesh<Vert>>& meshes,
                        size_t vertexBufferSize, size_t indexBufferSize,

@@ -16,16 +16,15 @@
 #include "rupture/graphics/gl/environment.h"
 #include "rupture/graphics/gl/framebuffer.h"
 #include "rupture/graphics/gl/model.h"
+#include "rupture/graphics/gl/renderer/state.h"
 #include "rupture/graphics/gl/shader.h"
 #include "rupture/graphics/gl/uniform.h"
 #include "rupture/graphics/gl/vertex_buffer.h"
 
-using namespace std::string_literals;
-
 namespace gl {
 
 template <typename, typename, size_t, size_t>
-class Renderer;
+class MeshRenderer;
 
 template <size_t size>
 class DrawIndicredBuffer {
@@ -188,7 +187,7 @@ class InstanceAttribBuffer {
 
    private:
     template <typename, typename, size_t, size_t>
-    friend class Renderer;
+    friend class MeshRenderer;
 
     static const size_t capacity{Size};
     GLuint m_glBuffer;
@@ -225,7 +224,7 @@ class RenderCommand {
 
    private:
     template <typename, typename, size_t, size_t>
-    friend class Renderer;
+    friend class MeshRenderer;
 
     std::vector<command::Draw> m_commands;
     std::vector<InstanceType> m_instanceAttributes;
@@ -234,22 +233,11 @@ class RenderCommand {
     GLenum m_drawMode;
 };
 
-class RendererState {
-   public:
-    virtual ~RendererState() = default;
-
-   protected:
-    static const GLuint vertexBufferIndex{0};
-    static const GLuint instanceBufferIndex{1};
-
-    inline static GLuint currentVertexArray{GL_NONE};
-};
-
 template <typename VertexType, typename InstanceType,
           size_t DrawBufferSize = 32, size_t InstanceBufferSize = 128>
-class Renderer : public RendererState {
+class MeshRenderer : public RendererState {
    public:
-    Renderer() {
+    MeshRenderer() {
         GLuint nextAttribIndex{0};
         glCreateVertexArrays(1, &m_glVertexArray);
         VertexAttribs<VertexType>::setup(m_glVertexArray, vertexBufferIndex,
@@ -259,8 +247,8 @@ class Renderer : public RendererState {
         bindInstanceBuffer();
     };
 
-    Renderer(const Renderer&) = delete;
-    Renderer(Renderer&& other)
+    MeshRenderer(const MeshRenderer&) = delete;
+    MeshRenderer(MeshRenderer&& other)
         : m_instanceBuffer{std::move(other.m_instanceBuffer)},
           m_drawIndirectBuffer{std::move(other.m_drawIndirectBuffer)},
           m_materialIndexBuffer{std::move(other.m_materialIndexBuffer)} {
@@ -270,8 +258,8 @@ class Renderer : public RendererState {
         other.m_glVertexArray = GL_NONE;
     };
 
-    Renderer& operator=(const Renderer&) = delete;
-    Renderer& operator=(Renderer&& other) {
+    MeshRenderer& operator=(const MeshRenderer&) = delete;
+    MeshRenderer& operator=(MeshRenderer&& other) {
         m_instanceBuffer = std::move(other.m_instanceBuffer);
         m_drawIndirectBuffer = std::move(other.m_drawIndirectBuffer);
         m_materialIndexBuffer = std::move(other.m_materialIndexBuffer);
@@ -282,7 +270,7 @@ class Renderer : public RendererState {
         return *this;
     };
 
-    ~Renderer() override {
+    ~MeshRenderer() override {
         if (m_glVertexArray != GL_NONE) {
             if (m_glVertexArray == currentVertexArray) {
                 currentVertexArray = GL_NONE;
@@ -395,111 +383,6 @@ class Renderer : public RendererState {
     const VertexBuffer<VertexType>* m_currentVertexBuffer;
 
     GLuint m_glVertexArray;
-};
-
-class CubeRenderer : public RendererState {
-   public:
-    CubeRenderer();
-
-    CubeRenderer(const CubeRenderer&) = delete;
-    CubeRenderer(CubeRenderer&&) = delete;
-
-    CubeRenderer& operator=(const CubeRenderer&) = delete;
-    CubeRenderer& operator=(CubeRenderer&&) = delete;
-
-    ~CubeRenderer() override {
-        if (m_vertexArray != GL_NONE) {
-            if (currentVertexArray == m_vertexArray) {
-                currentVertexArray = GL_NONE;
-                glBindVertexArray(GL_NONE);
-            }
-            glDeleteVertexArrays(1, &m_vertexArray);
-            glDeleteBuffers(1, &m_vertexBuffer);
-            glDeleteBuffers(1, &m_indexBuffer);
-        }
-    }
-
-    void drawSkybox(Environment& environment, const glm::mat4& cameraMatrix,
-                    const glm::vec3& cameraPositions);
-
-    Environment createEnvironmentMap(const std::filesystem::path& path,
-                                     size_t cubeResolution = 512,
-                                     size_t mipLevels = 5);
-    void createOmniShadowMap();
-
-   private:
-    void bind();
-
-    void createVertexArray();
-    void createVertexBuffer();
-    void writeProjectionUniform();
-
-    Texture renderEnvironmentMap(Texture& environment2D, size_t cubeResolution);
-    Texture renderIrradianceMap(Texture& environmentCube,
-                                size_t cubeResolution);
-    Texture renderSpecularMap(Texture& environmentCube, size_t cubeResolution,
-                              size_t mipLevels);
-
-    ShaderUniform m_projections;
-
-    Shader m_depthCubeShader;
-    Shader m_colorCubeShader;
-    Shader m_irradianceMapShader;
-    Shader m_specularMapShader;
-    Shader m_skyboxShader;
-
-    Framebuffer m_framebuffer;
-
-    GLuint m_vertexArray;
-    GLuint m_vertexBuffer;
-    GLuint m_indexBuffer;
-};
-
-class QuadRenderer : public RendererState {
-   public:
-    QuadRenderer();
-
-    QuadRenderer(const QuadRenderer&) = delete;
-    QuadRenderer(QuadRenderer&&) = delete;
-
-    QuadRenderer& operator=(const QuadRenderer&) = delete;
-    QuadRenderer& operator=(QuadRenderer&&) = delete;
-
-    ~QuadRenderer() override {
-        if (m_vertexArray != GL_NONE) {
-            if (currentVertexArray == m_vertexArray) {
-                currentVertexArray = GL_NONE;
-                glBindVertexArray(GL_NONE);
-            }
-            glDeleteVertexArrays(1, &m_vertexArray);
-            glDeleteBuffers(1, &m_vertexBuffer);
-            glDeleteBuffers(1, &m_indexBuffer);
-        }
-    }
-
-    void drawTexture(Texture& texture);
-
-    Texture createBRDFMap(size_t width, size_t height);
-
-   private:
-    struct QuadVert {
-        glm::vec2 pos;
-        glm::vec2 tex;
-    };
-
-    void bind();
-
-    void createVertexArray();
-    void createVertexBuffer();
-
-    Shader m_brdfMapShader;
-    Shader m_texturedQuadShader;
-
-    Framebuffer m_framebuffer;
-
-    GLuint m_vertexArray;
-    GLuint m_vertexBuffer;
-    GLuint m_indexBuffer;
 };
 
 }  // namespace gl

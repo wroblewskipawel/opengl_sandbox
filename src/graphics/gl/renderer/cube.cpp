@@ -1,23 +1,15 @@
-#include "rupture/graphics/gl/renderer.h"
+#include "rupture/graphics/gl/renderer/cube.h"
+#include "rupture/graphics/gl/renderer/uniform.h"
 
 #include <glm/glm.hpp>
 
-#include "rupture/graphics/shaders/shaders.h"
 #include "rupture/graphics/gl/texture.h"
 #include "rupture/graphics/gltf/texture.h"
-
-
-const std::string PROJECTION_UNIFORM{"CubeProjection"s};
-const std::string ENV_2D_TEXTURE_UNIFORM{"equirectangular_map"s};
-const std::string ENV_CUBE_TEXTURE_UNIFORM{"environment_map"s};
-const std::string MODEL_UNIFORM{"model"s};
-const std::string ROUGHNESS_UNIFORM{"roughness"s};
-const std::string TEXTURE_UNIFORM("image"s);
+#include "rupture/graphics/shaders/shaders.h"
 
 namespace gl {
-
 CubeRenderer::CubeRenderer()
-    : m_projections{PROJECTION_UNIFORM},
+    : m_projections{renderer::uniforms::cube::PROJECTION},
       m_depthCubeShader{shader::core::DEPTH_CUBE},
       m_colorCubeShader{shader::core::COLOR_CUBE},
       m_irradianceMapShader{shader::core::IRRADIANCE_MAP},
@@ -103,11 +95,11 @@ void CubeRenderer::drawSkybox(Environment& environment,
     m_skyboxShader.use();
     m_skyboxShader.setUniformMatrix4(Shader::CAMERA_MATRIX_UNIFORM,
                                      cameraMatrix);
-    m_skyboxShader.setUniformMatrix4(MODEL_UNIFORM, model);
+    m_skyboxShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, model);
 
     auto environmentTexture = environment.environmentMap().texture();
     glBindTextureUnit(0, environmentTexture);
-    m_skyboxShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
+    m_skyboxShader.setUniformI(renderer::uniforms::cube::ENV_CUBE_TEXTURE, 0);
 
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
@@ -169,8 +161,8 @@ Texture CubeRenderer::renderEnvironmentMap(Texture& environment2D,
     m_colorCubeShader.use();
 
     glBindTextureUnit(0, environment2D.texture());
-    m_colorCubeShader.setUniformI(ENV_2D_TEXTURE_UNIFORM, 0);
-    m_colorCubeShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
+    m_colorCubeShader.setUniformI(renderer::uniforms::cube::ENV_2D_TEXTURE, 0);
+    m_colorCubeShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, glm::mat4{1.0f});
     m_colorCubeShader.bindUniformBlock(m_projections.blockInfo());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -197,8 +189,8 @@ Texture CubeRenderer::renderIrradianceMap(Texture& environmentCube,
     m_irradianceMapShader.use();
 
     glBindTextureUnit(0, environmentCube.texture());
-    m_irradianceMapShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
-    m_irradianceMapShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
+    m_irradianceMapShader.setUniformI(renderer::uniforms::cube::ENV_CUBE_TEXTURE, 0);
+    m_irradianceMapShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, glm::mat4{1.0f});
     m_irradianceMapShader.bindUniformBlock(m_projections.blockInfo());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -223,8 +215,8 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
     m_specularMapShader.use();
 
     glBindTextureUnit(0, environmentCube.texture());
-    m_specularMapShader.setUniformI(ENV_CUBE_TEXTURE_UNIFORM, 0);
-    m_specularMapShader.setUniformMatrix4(MODEL_UNIFORM, glm::mat4{1.0f});
+    m_specularMapShader.setUniformI(renderer::uniforms::cube::ENV_CUBE_TEXTURE, 0);
+    m_specularMapShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, glm::mat4{1.0f});
     m_specularMapShader.bindUniformBlock(m_projections.blockInfo());
 
     for (size_t l{0}; l < mipLevels; l++) {
@@ -235,7 +227,7 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
         float roughness =
             static_cast<float>(l) / static_cast<float>(mipLevels - 1);
 
-        m_specularMapShader.setUniformF(ROUGHNESS_UNIFORM, roughness);
+        m_specularMapShader.setUniformF(renderer::uniforms::cube::ROUGHNESS, roughness);
 
         glViewport(0, 0, mipResolution, mipResolution);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -246,102 +238,5 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
 }
 
 void CubeRenderer::createOmniShadowMap() {}
-
-QuadRenderer::QuadRenderer()
-    : m_brdfMapShader{shader::core::BRDF_MAP},
-      m_texturedQuadShader{shader::core::TEXTURED_QUAD} {
-    createVertexBuffer();
-    createVertexArray();
-}
-
-void QuadRenderer::createVertexBuffer() {
-    std::vector<QuadVert> quadMesh{
-        {glm::vec2{-1.0f, -1.0f}, glm::vec2{0.0f, 0.0f}},
-        {glm::vec2{1.0f, -1.0f}, glm::vec2{1.0f, 0.0f}},
-        {glm::vec2{1.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
-        {glm::vec2{-1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}}};
-    std::vector<uint32_t> quadIndices{0, 1, 2, 2, 3, 0};
-
-    glCreateBuffers(1, &m_vertexBuffer);
-    glCreateBuffers(1, &m_indexBuffer);
-
-    glNamedBufferStorage(m_vertexBuffer, sizeof(QuadVert) * quadMesh.size(),
-                         quadMesh.data(), GL_NONE);
-    glNamedBufferStorage(m_indexBuffer, sizeof(uint32_t) * quadIndices.size(),
-                         quadIndices.data(), GL_NONE);
-}
-
-void QuadRenderer::createVertexArray() {
-    glCreateVertexArrays(1, &m_vertexArray);
-
-    glVertexArrayVertexBuffer(m_vertexArray, 0, m_vertexBuffer, 0,
-                              sizeof(QuadVert));
-    glVertexArrayElementBuffer(m_vertexArray, m_indexBuffer);
-
-    glVertexArrayAttribBinding(m_vertexArray, 0, 0);
-    glVertexArrayAttribFormat(m_vertexArray, 0, 2, GL_FLOAT, GL_FALSE,
-                              offsetof(QuadVert, pos));
-    glEnableVertexArrayAttrib(m_vertexArray, 0);
-
-    glVertexArrayAttribBinding(m_vertexArray, 1, 0);
-    glVertexArrayAttribFormat(m_vertexArray, 1, 2, GL_FLOAT, GL_TRUE,
-                              offsetof(QuadVert, tex));
-    glEnableVertexArrayAttrib(m_vertexArray, 1);
-}
-
-void QuadRenderer::bind() {
-    if (m_vertexArray != currentVertexArray) {
-        currentVertexArray = m_vertexArray;
-        glBindVertexArray(m_vertexArray);
-    }
-}
-
-Texture QuadRenderer::createBRDFMap(size_t width, size_t height) {
-    Texture::SamplerConfig sampler;
-
-    sampler.magFilter = GL_LINEAR;
-    sampler.minFilter = GL_LINEAR;
-    sampler.wrapS = GL_CLAMP_TO_EDGE;
-    sampler.wrapT = GL_CLAMP_TO_EDGE;
-
-    Texture brdfMap{GL_TEXTURE_2D, GL_RG16F, width, height, sampler, 1};
-
-    std::array<GLint, 4> currentViewport{};
-    glGetIntegerv(GL_VIEWPORT, currentViewport.data());
-
-    bind();
-
-    m_brdfMapShader.use();
-
-    m_framebuffer.bind(Framebuffer::BindPoint::Draw);
-
-    m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0,
-                                brdfMap.texture());
-    m_framebuffer.setDrawBuffers({Framebuffer::Buffer::Color_0});
-
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    Framebuffer::bindDefault(Framebuffer::BindPoint::Draw);
-
-    m_framebuffer.setAttachment(Framebuffer::Attachment::Color_0, GL_NONE);
-    m_framebuffer.setDrawBuffers({Framebuffer::Buffer::None});
-
-    glViewport(0, 0, currentViewport[2], currentViewport[3]);
-
-    return brdfMap;
-}
-
-void QuadRenderer::drawTexture(Texture& texture) {
-    bind();
-    m_texturedQuadShader.use();
-
-    glBindTextureUnit(0, texture.texture());
-    m_texturedQuadShader.setUniformI(TEXTURE_UNIFORM, 0);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
 
 }  // namespace gl

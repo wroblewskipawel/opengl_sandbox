@@ -12,7 +12,9 @@
 #include "rupture/graphics/gl/light.h"
 #include "rupture/graphics/gl/material_pack.h"
 #include "rupture/graphics/gl/model.h"
-#include "rupture/graphics/gl/renderer.h"
+#include "rupture/graphics/gl/renderer/cube.h"
+#include "rupture/graphics/gl/renderer/mesh.h"
+#include "rupture/graphics/gl/renderer/quad.h"
 #include "rupture/graphics/gl/shader.h"
 #include "rupture/graphics/gl/texture.h"
 #include "rupture/graphics/gl/uniform.h"
@@ -25,14 +27,15 @@
 #include "rupture/typemap.h"
 #include "rupture/utility.h "
 
+
 class Application;
 
 namespace gl {
 
-using Renderers =
-    TypeMap<Renderer<RigidVertex, glm::mat4>, Renderer<RigidVertex, glm::vec3>,
-            Renderer<SkinVertex, glm::mat4>, Renderer<glm::vec3, DebugInstance>,
-            Renderer<DebugVertex, DebugInstance>>;
+using Renderers = TypeMap<
+    MeshRenderer<RigidVertex, glm::mat4>, MeshRenderer<RigidVertex, glm::vec3>,
+    MeshRenderer<SkinVertex, glm::mat4>, MeshRenderer<glm::vec3, DebugInstance>,
+    MeshRenderer<DebugVertex, DebugInstance>>;
 
 template <typename Vert>
 using CommandIndex =
@@ -117,11 +120,12 @@ class Context {
 
     template <typename VertexType, typename InstanceType>
     void drawImmediate(handle::Model<VertexType> modelHandle,
-              const InstanceType& instance) {
+                       const InstanceType& instance) {
         if (m_frameState.shader == handle::Shader::null()) {
             throw std::logic_error("Shader not set for current frame");
         }
-        auto& renderer = m_renderes.at<Renderer<VertexType, InstanceType>>();
+        auto& renderer =
+            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
 
         auto& model = getDrawInfo(modelHandle);
         auto& baseDrawInfo = model.drawInfos[0];
@@ -145,14 +149,16 @@ class Context {
                       const InstanceType& instance) {
         auto& model = getDrawInfo(modelHandle);
         auto& baseDrawInfo = model.drawInfos[0];
-        auto commandIndex = std::make_pair(
-            baseDrawInfo.vertexBuffer, baseDrawInfo.materialPack);
+        auto commandIndex = std::make_pair(baseDrawInfo.vertexBuffer,
+                                           baseDrawInfo.materialPack);
         auto& commandBufferMap =
             m_commands.at<CommandBufferMap<VertexType, InstanceType>>();
         if (commandBufferMap.find(commandIndex) == commandBufferMap.end()) {
-            commandBufferMap.insert({commandIndex, CommandBuffer<VertexType, InstanceType>{}});
+            commandBufferMap.insert(
+                {commandIndex, CommandBuffer<VertexType, InstanceType>{}});
         }
-        auto& renderer = m_renderes.at<Renderer<VertexType, InstanceType>>();
+        auto& renderer =
+            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
         auto& commandBuffer = commandBufferMap.at(commandIndex);
         commandBuffer.push_back(renderer.prepareCommand(model, instance));
     };
@@ -275,7 +281,8 @@ class Context {
 
     template <typename VertexType, typename InstanceType>
     void bindVertexBuffer(handle::VertexBuffer<VertexType> handle) {
-        auto& renderer = m_renderes.at<Renderer<VertexType, InstanceType>>();
+        auto& renderer =
+            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
         auto& vertexBuffer = at<VertexBuffer<VertexType>>()[handle.index];
         renderer.updateVertexBufferBinding(vertexBuffer);
     }
@@ -287,7 +294,8 @@ class Context {
         }
         auto& commands =
             m_commands.at<CommandBufferMap<VertexType, InstanceType>>();
-        auto& renderer = m_renderes.at<Renderer<VertexType, InstanceType>>();
+        auto& renderer =
+            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
         renderer.bind();
         for (const auto& [commandIndex, commandBuffer] : commands) {
             auto [vertexBuffer, materialPack] = commandIndex;
