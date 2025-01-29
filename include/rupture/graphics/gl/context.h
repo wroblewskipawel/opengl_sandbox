@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "rupture/graphics/camera.h"
+#include "rupture/graphics/gl/context.inl"
 #include "rupture/graphics/gl/environment.h"
 #include "rupture/graphics/gl/framebuffer.h"
 #include "rupture/graphics/gl/light.h"
@@ -27,32 +28,9 @@
 #include "rupture/typemap.h"
 #include "rupture/utility.h "
 
-
 class Application;
 
 namespace gl {
-
-using Renderers = TypeMap<
-    MeshRenderer<RigidVertex, glm::mat4>, MeshRenderer<RigidVertex, glm::vec3>,
-    MeshRenderer<SkinVertex, glm::mat4>, MeshRenderer<glm::vec3, DebugInstance>,
-    MeshRenderer<DebugVertex, DebugInstance>>;
-
-template <typename Vert>
-using CommandIndex =
-    std::pair<handle::VertexBuffer<Vert>, handle::MaterialPack>;
-
-template <typename Vert, typename Instance>
-using CommandBuffer = std::vector<RenderCommand<Vert, Instance>>;
-
-template <typename Vert, typename Instance>
-using CommandBufferMap =
-    std::unordered_map<CommandIndex<Vert>, CommandBuffer<Vert, Instance>>;
-
-using Commands = StaticTypeMap<CommandBufferMap<RigidVertex, glm::mat4>,
-                               CommandBufferMap<RigidVertex, glm::vec3>,
-                               CommandBufferMap<SkinVertex, glm::mat4>,
-                               CommandBufferMap<glm::vec3, DebugInstance>,
-                               CommandBufferMap<DebugVertex, DebugInstance>>;
 
 class Context;
 
@@ -72,14 +50,12 @@ class Context {
     void loadDocument(const gltf::Document& document);
 
     handle::Shader getShader(const std::string& name) {
-        return m_shaderMap.at(name);
+        return handleMap<handle::Shader>().at(name);
     }
 
     template <typename Vert>
     handle::Model<Vert> getModel(const std::string& name) {
-        return m_modelMaps
-            .at<std::unordered_map<std::string, handle::Model<Vert>>>()
-            .at(name);
+        return handleMap<handle::Model<Vert>>().at(name);
     }
 
     template <typename Vert>
@@ -96,10 +72,10 @@ class Context {
             return u32;
         };
 
-        auto& handles = getModelHandles<Vert>();
+        auto& handles = handleMap<handle::Model<Vert>>();
         auto& glModels = m_models.at<std::vector<Model<Vert>>>();
 
-        auto& vertexBuffers = at<VertexBuffer<Vert>>();
+        auto& vertexBuffers = resourceStorage<VertexBuffer<Vert>>();
         auto& buffer = vertexBuffers.emplace_back(VertexBuffer{models});
         auto bufferIndex = u32Checked(vertexBuffers.size() - 1);
         for (size_t i{0}; i < models.size(); i++) {
@@ -125,7 +101,7 @@ class Context {
             throw std::logic_error("Shader not set for current frame");
         }
         auto& renderer =
-            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
+            m_meshRenderes.at<MeshRenderer<VertexType, InstanceType>>();
 
         auto& model = getDrawInfo(modelHandle);
         auto& baseDrawInfo = model.drawInfos[0];
@@ -158,7 +134,7 @@ class Context {
                 {commandIndex, CommandBuffer<VertexType, InstanceType>{}});
         }
         auto& renderer =
-            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
+            m_meshRenderes.at<MeshRenderer<VertexType, InstanceType>>();
         auto& commandBuffer = commandBufferMap.at(commandIndex);
         commandBuffer.push_back(renderer.prepareCommand(model, instance));
     };
@@ -188,31 +164,35 @@ class Context {
     void endFrame();
 
     template <typename Resource>
-    std::vector<Resource>& at() {
+    std::vector<Resource>& resourceStorage() {
         return m_resources.at<std::vector<Resource>>();
     }
 
     template <typename Resource>
-    const std::vector<Resource>& at() const {
+    const std::vector<Resource>& resourceStorage() const {
         return m_resources.at<std::vector<Resource>>();
+    }
+
+    template <typename Resource>
+    NamedResourceMap<Resource>& handleMap() {
+        return m_handles.at<NamedResourceMap<Resource>>();
+    }
+
+    template <typename Resource>
+    const NamedResourceMap<Resource>& handleMap() const {
+        return m_handles.at<NamedResourceMap<Resource>>();
     }
 
     template <typename Vert>
     const VertexBuffer<Vert>& getVertexBuffer(
         handle::VertexBuffer<Vert> handle) {
-        auto& buffers = at<VertexBuffer<Vert>>();
+        auto& buffers = resourceStorage<VertexBuffer<Vert>>();
         return buffers[handle.index];
     }
 
     template <typename Vert>
     const Model<Vert>& getDrawInfo(handle::Model<Vert> handle) {
-        return m_models.at<std::vector<Model<Vert>>>()[handle.index];
-    }
-
-    template <typename Vert>
-    std::unordered_map<std::string, handle::Model<Vert>>& getModelHandles() {
-        return m_modelMaps
-            .at<std::unordered_map<std::string, handle::Model<Vert>>>();
+        return resourceStorage<Model<Vert>>()[handle.index];
     }
 
     void loadDocumentMaterials(
@@ -231,13 +211,13 @@ class Context {
             return u32;
         };
 
-        auto& handles = getModelHandles<Vert>();
-        auto& models = m_models.at<std::vector<Model<Vert>>>();
+        auto& handles = handleMap<handle::Model<Vert>>();
+        auto& models = resourceStorage<Model<Vert>>();
 
-        const auto& materialPacks = at<MaterialPack>();
+        const auto& materialPacks = resourceStorage<MaterialPack>();
         const auto& documentModels = document.getModels<Vert>();
         if (documentModels.size()) {
-            auto& vertexBuffers = at<VertexBuffer<Vert>>();
+            auto& vertexBuffers = resourceStorage<VertexBuffer<Vert>>();
             auto& buffer = vertexBuffers.emplace_back(
                 VertexBuffer{document.at<gltf::Mesh<Vert>>()});
 
@@ -274,7 +254,8 @@ class Context {
     void bindMaterialPack(handle::MaterialPack handle) {
         if (handle != m_frameState.materialPack) {
             m_frameState.materialPack = handle;
-            auto& pack = at<MaterialPack>()[m_frameState.materialPack.index];
+            auto& pack = resourceStorage<
+                MaterialPack>()[m_frameState.materialPack.index];
             getCurrentShader().bindUniformBlock(pack.blockInfo());
         }
     }
@@ -282,8 +263,9 @@ class Context {
     template <typename VertexType, typename InstanceType>
     void bindVertexBuffer(handle::VertexBuffer<VertexType> handle) {
         auto& renderer =
-            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
-        auto& vertexBuffer = at<VertexBuffer<VertexType>>()[handle.index];
+            m_meshRenderes.at<MeshRenderer<VertexType, InstanceType>>();
+        auto& vertexBuffer =
+            resourceStorage<VertexBuffer<VertexType>>()[handle.index];
         renderer.updateVertexBufferBinding(vertexBuffer);
     }
 
@@ -295,7 +277,7 @@ class Context {
         auto& commands =
             m_commands.at<CommandBufferMap<VertexType, InstanceType>>();
         auto& renderer =
-            m_renderes.at<MeshRenderer<VertexType, InstanceType>>();
+            m_meshRenderes.at<MeshRenderer<VertexType, InstanceType>>();
         renderer.bind();
         for (const auto& [commandIndex, commandBuffer] : commands) {
             auto [vertexBuffer, materialPack] = commandIndex;
@@ -305,33 +287,12 @@ class Context {
         }
     };
 
-    inline static GLuint currentVertexArray{GL_NONE};
     Window& window;
 
-    TypeMap<std::vector<Shader>, std::vector<Texture>, std::vector<Environment>,
-            std::vector<MaterialPack>, std::vector<LightPack>,
-            std::vector<VertexBuffer<RigidVertex>>,
-            std::vector<VertexBuffer<SkinVertex>>,
-            std::vector<VertexBuffer<DebugVertex>>,
-            std::vector<VertexBuffer<glm::vec3>>>
-        m_resources;
+    ResourcesStorage m_resources;
+    NamedHandleMap m_handles;
 
-    TypeMap<std::vector<Model<RigidVertex>>, std::vector<Model<SkinVertex>>,
-            std::vector<Model<DebugVertex>>, std::vector<Model<glm::vec3>>>
-        m_models;
-
-    TypeMap<std::unordered_map<std::string, handle::Model<RigidVertex>>,
-            std::unordered_map<std::string, handle::Model<SkinVertex>>,
-            std::unordered_map<std::string, handle::Model<DebugVertex>>,
-            std::unordered_map<std::string, handle::Model<glm::vec3>>>
-        m_modelMaps;
-
-    Renderers m_renderes;
-
-    std::unordered_map<std::string, handle::Shader> m_shaderMap;
-    std::unordered_map<std::string, handle::Environment> m_environmentMap;
-    std::unordered_map<std::string, handle::Lighting> m_lightingMap;
-
+    MeshRenderers m_meshRenderes;
     CubeRenderer m_cubeRenderer;
     QuadRenderer m_quadRenderer;
 

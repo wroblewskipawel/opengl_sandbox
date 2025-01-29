@@ -20,20 +20,21 @@ Context::Context(Window& window)
 };
 
 gl::handle::Shader Context::loadShader(const std::filesystem::path& shaderDir) {
-    auto& shaders = at<Shader>();
+    auto& shaders = resourceStorage<Shader>();
     shaders.emplace_back(shaderDir);
     auto shaderHandle = handle::Shader(shaders.size() - 1);
-    m_shaderMap.emplace(shaderDir.stem().string(), shaderHandle);
+    handleMap<handle::Shader>().emplace(shaderDir.stem().string(),
+                                        shaderHandle);
     return shaderHandle;
 }
 
 void Context::loadShaders(
     const std::vector<std::filesystem::path>& shaderDirs) {
-    auto& shaders = at<Shader>();
+    auto& shaders = resourceStorage<Shader>();
     for (auto& dir : shaderDirs) {
         shaders.emplace_back(dir);
-        m_shaderMap.emplace(dir.stem().string(),
-                            handle::Shader(shaders.size() - 1));
+        handleMap<handle::Shader>().emplace(dir.stem().string(),
+                                            handle::Shader(shaders.size() - 1));
     }
 }
 
@@ -45,8 +46,8 @@ void Context::loadDocument(const gltf::Document& document) {
 }
 
 void Context::createDefaultMaterial() {
-    auto& textures = at<Texture>();
-    auto& materialPacks = at<MaterialPack>();
+    auto& textures = resourceStorage<Texture>();
+    auto& materialPacks = resourceStorage<MaterialPack>();
     PackBuilder nullBuilder{};
     nullBuilder.setMaterialData(0, gltf::pbrMaterial::null(), 0, textures,
                                 m_nullTexture);
@@ -64,14 +65,14 @@ void Context::createCommandBuffers() {
 void Context::loadDocumentMaterials(
     const gltf::Document& document,
     std::unordered_map<size_t, size_t>& materialPackMap) {
-    auto& textures = at<Texture>();
+    auto& textures = resourceStorage<Texture>();
 
     auto textureIndexOffset = textures.size();
     for (const auto& texture : document.at<gltf::Texture>()) {
         textures.emplace_back(texture);
     }
 
-    auto& materialPacks = at<MaterialPack>();
+    auto& materialPacks = resourceStorage<MaterialPack>();
     auto materialPackIndexOffset = materialPacks.size();
 
     std::vector<PackBuilder> packBuilders{};
@@ -97,13 +98,13 @@ void Context::loadDocumentMaterials(
 
 handle::Environment Context::createEnvironmentMap(
     const std::filesystem::path& path, size_t cubeResolution) {
-    auto& environments = at<Environment>();
+    auto& environments = resourceStorage<Environment>();
 
     environments.emplace_back(
         m_cubeRenderer.createEnvironmentMap(path, cubeResolution));
 
     auto handle = handle::Environment{environments.size() - 1};
-    m_environmentMap.emplace(path.stem().string(), handle);
+    handleMap<handle::Environment>().emplace(path.stem().string(), handle);
 
     return handle;
 }
@@ -111,12 +112,12 @@ handle::Environment Context::createEnvironmentMap(
 handle::Lighting Context::createLightPack(
     const std::string& name, const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& intensities) {
-    auto& lighting = at<LightPack>();
+    auto& lighting = resourceStorage<LightPack>();
 
     lighting.emplace_back(LightPack{positions, intensities});
 
     auto handle = handle::Lighting(lighting.size() - 1);
-    m_lightingMap.emplace(name, handle);
+    handleMap<handle::Lighting>().emplace(name, handle);
 
     return handle;
 }
@@ -133,7 +134,7 @@ void Context::beginFrame() {
     m_frameState.lighting = handle::Lighting::null();
 };
 
-void Context::endFrame() { 
+void Context::endFrame() {
     flushCommandBuffers();
     window.display();
 }
@@ -159,20 +160,22 @@ Shader& Context::setShaderState(handle::Shader handle) {
     }
 
     if (m_frameState.lighting != handle::Lighting::null()) {
-        auto& lighPack = at<LightPack>()[m_frameState.lighting.index];
+        auto& lighPack =
+            resourceStorage<LightPack>()[m_frameState.lighting.index];
         if (shader.hasBlock(lighPack.blockName())) {
             shader.bindUniformBlock(lighPack.blockInfo());
         }
     }
     if (m_frameState.materialPack != handle::MaterialPack::null()) {
         auto& materialPack =
-            at<MaterialPack>()[m_frameState.materialPack.index];
+            resourceStorage<MaterialPack>()[m_frameState.materialPack.index];
         if (shader.hasBlock(materialPack.blockName())) {
             shader.bindUniformBlock(materialPack.blockInfo());
         }
     }
     if (m_frameState.environment != handle::Environment::null()) {
-        auto& environment = at<Environment>()[m_frameState.environment.index];
+        auto& environment =
+            resourceStorage<Environment>()[m_frameState.environment.index];
         auto irradianceTexture = environment.irradianceMap().texture();
         auto specularTexture = environment.specularMap().texture();
 
@@ -196,7 +199,8 @@ Shader& Context::setShaderState(handle::Shader handle) {
 
 void Context::setEnvironment(handle::Environment handle) {
     m_frameState.environment = handle;
-    auto& environment = at<Environment>()[m_frameState.environment.index];
+    auto& environment =
+        resourceStorage<Environment>()[m_frameState.environment.index];
 
     m_cubeRenderer.drawSkybox(environment, m_frameState.currentCameraMatrix,
                               m_frameState.currentCameraPosition);
@@ -220,14 +224,15 @@ void Context::setEnvironment(handle::Environment handle) {
 void Context::setLighting(handle::Lighting handle) {
     m_frameState.lighting = handle;
     if (m_frameState.shader != handle::Shader::null()) {
-        auto& lightPack = at<LightPack>()[m_frameState.lighting.index];
-        auto& shaders = at<Shader>()[m_frameState.shader.index];
+        auto& lightPack =
+            resourceStorage<LightPack>()[m_frameState.lighting.index];
+        auto& shaders = resourceStorage<Shader>()[m_frameState.shader.index];
         shaders.bindUniformBlock(lightPack.blockInfo());
     }
 }
 
 Shader& Context::useShader(handle::Shader handle) {
-    auto& shaders = at<Shader>();
+    auto& shaders = resourceStorage<Shader>();
     if (handle != handle::Shader::null()) {
         if (handle != m_frameState.shader) {
             m_frameState.shader = handle;
@@ -242,7 +247,7 @@ Shader& Context::useShader(handle::Shader handle) {
 }
 
 Shader& Context::getCurrentShader() {
-    auto& shaders = at<Shader>();
+    auto& shaders = resourceStorage<Shader>();
     if (m_frameState.shader != handle::Shader::null()) {
         return shaders[m_frameState.shader.index];
     } else {
