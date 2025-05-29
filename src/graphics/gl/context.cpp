@@ -17,6 +17,7 @@ Context::Context(Window& window)
       m_brdfMap{m_quadRenderer.createBRDFMap(512, 512)} {
     createDefaultMaterial();
     createCommandBuffers();
+    m_pipeline.execute();
 };
 
 gl::handle::Shader Context::loadShader(const std::filesystem::path& shaderDir) {

@@ -8,6 +8,7 @@
 
 #include "rupture/graphics/camera.h"
 #include "rupture/graphics/gl/context.inl"
+#include "rupture/graphics/gl/pipeline.h"
 #include "rupture/graphics/gl/environment.h"
 #include "rupture/graphics/gl/framebuffer.h"
 #include "rupture/graphics/gl/light.h"
@@ -310,6 +311,7 @@ class Context {
     Texture m_brdfMap;
 
     Commands m_commands;
+    TestPipeline m_pipeline;
 };
 
 }  // namespace gl
