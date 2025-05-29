@@ -1,20 +1,24 @@
-# rupture
+# opengl_sandbox
 
-Project aims to provide custom game engine tailored specifically to games using tile maps as their world representation and rellying heavily on procedural content generation.  
-At the current state of the project, there is OpenGL based renderer implemented, making use of instanced indirect drawing commands and bindless texturing as a means to enable efficient tile map rendering.
+Projects acts as a sandbox to learn and explore computer graphics and game engine concepts. 
 
 ---
 
-### Supported features
+### Features
+* OpenGL draw calls based on instanced indirect drawing commands
+* Bindless textures packs aiming to reduce OpengGL API call counts
 * glTF2.0 model import
 * Image based lighting
 * PBR shading
 
-### In development
+### Ideas in development
+* Template-based modular graphics pipeline definition
+* Deferred rendering pipeline
 * Procedurall map generation with automatically derived geometric constraints based on provided tile meshes
 * Custom ECS framework
 * Skeletal animation system
 * Quad-tree space partitioning
+* Multithreaded draw commands preparation
 ---
 ### Build instructions
 
