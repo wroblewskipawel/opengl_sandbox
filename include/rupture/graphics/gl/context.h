@@ -27,7 +27,7 @@
 #include "rupture/graphics/gltf/texture.h"
 #include "rupture/graphics/window.h"
 #include "rupture/typemap.h"
-#include "rupture/utility.h "
+#include "rupture/utility.h"
 
 class Application;
 
@@ -45,7 +45,7 @@ class Context {
 
     ~Context() = default;
 
-    gl::handle::Shader Context::loadShader(
+    gl::handle::Shader loadShader(
         const std::filesystem::path& shaderDir);
     void loadShaders(const std::vector<std::filesystem::path>& shaderDirs);
     void loadDocument(const gltf::Document& document);
@@ -74,9 +74,9 @@ class Context {
         };
 
         auto& handles = handleMap<handle::Model<Vert>>();
-        auto& glModels = m_models.at<std::vector<Model<Vert>>>();
-
+        auto& glModels = resourceStorage<std::vector<Model<Vert>>>();
         auto& vertexBuffers = resourceStorage<VertexBuffer<Vert>>();
+
         auto& buffer = vertexBuffers.emplace_back(VertexBuffer{models});
         auto bufferIndex = u32Checked(vertexBuffers.size() - 1);
         for (size_t i{0}; i < models.size(); i++) {
@@ -107,12 +107,12 @@ class Context {
         auto& model = getDrawInfo(modelHandle);
         auto& baseDrawInfo = model.drawInfos[0];
         auto& vertexBuffer =
-            at<VertexBuffer<VertexType>>()[baseDrawInfo.vertexBuffer.index];
+            getVertexBuffer<VertexType>(baseDrawInfo.vertexBuffer);
 
         auto& shader = getCurrentShader();
         if (baseDrawInfo.materialPack != m_frameState.materialPack) {
             m_frameState.materialPack = baseDrawInfo.materialPack;
-            auto& pack = at<MaterialPack>()[m_frameState.materialPack.index];
+            auto& pack = resourceStorage<MaterialPack>()[m_frameState.materialPack.index];
             shader.bindUniformBlock(pack.blockInfo());
         }
 

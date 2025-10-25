@@ -98,10 +98,10 @@ class TypeCell<T, Types...> {
     };
 
    private:
-    template <typename... T>
+    template <typename...>
     friend class StaticTypeMap;
 
-    template <typename... T>
+    template <typename...>
     friend class TypeCell;
 
     template <typename U>
@@ -113,7 +113,7 @@ class TypeCell<T, Types...> {
                 throw std::runtime_error("Value not initialized!");
             }
         } else {
-            return next.get<U>();
+            return next.template get<U>();
         }
     };
 
@@ -122,7 +122,7 @@ class TypeCell<T, Types...> {
         if constexpr (std::is_same<T, U>::value) {
             return data;
         } else {
-            return next.store<U>();
+            return next.template store<U>();
         }
     };
 
@@ -135,7 +135,7 @@ class StaticTypeMap {
    public:
     template <typename T, typename... Args>
     StaticTypeMap& insert(Args&&... args) {
-        auto& cell = cells.store<T>();
+        auto& cell = cells.template store<T>();
         cell = T(std::forward<Args>(args)...);
         return *this;
     }
@@ -147,12 +147,12 @@ class StaticTypeMap {
 
     template <typename T>
     T& at() {
-        return cells.get<T>();
+        return cells.template get<T>();
     }
 
     template <typename T>
     const T& at() const {
-        return cells.get<T>();
+        return cells.template get<T>();
     }
 
    private:

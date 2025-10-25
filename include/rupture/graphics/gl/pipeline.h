@@ -30,7 +30,7 @@ class UniqueTypeList<U, Types...> {
         if constexpr (std::is_same_v<U, T>) {
             return head;
         } else {
-            return tail.get<T>();
+            return tail.template get<T>();
         }
     }
 
@@ -73,7 +73,7 @@ class ListView<V, Views...> {
    public:
     template <typename List>
     constexpr ListView(List& list)
-        : head(list.get<V>()), tail(ListView<Views...>{list}) {}
+        : head(list.template get<V>()), tail(ListView<Views...>{list}) {}
 
     template <typename T>
     constexpr const T& get() const {
@@ -91,7 +91,7 @@ class ListView<V, Views...> {
         if constexpr (std::is_same_v<T, V>) {
             return head;
         } else {
-            return tail.get<T>();
+            return tail.template get<T>();
         }
     }
 
@@ -103,7 +103,7 @@ template <typename V>
 class ListView<V> {
    public:
     template <typename List>
-    constexpr ListView(List& list) : head(list.get<V>()) {}
+    constexpr ListView(List& list) : head(list.template get<V>()) {}
 
     template <typename T>
     constexpr const T& get() const {
@@ -159,7 +159,7 @@ constexpr auto make_uniqueTypeListBuilder() {
         return UniqueTypeListBuilder<U>{};
     } else {
         UniqueTypeListBuilder typeList{make_uniqueTypeListBuilder<Types...>()};
-        return typeList.pushType<U>();
+        return typeList.template pushType<U>();
     }
 }
 
@@ -191,7 +191,7 @@ class PipelineStage {
     }
 
    protected:
-    virtual void execute(ResourceView& resources) = 0;
+    virtual void execute(ResourceView&& resources) = 0;
 };
 
 template <typename... Stages>
@@ -200,7 +200,7 @@ class Pipeline {
     using StageList = UniqueTypeListType<Stages...>;
     using ResourceStorage = decltype((typename Stages::ResourceList{} + ...));
 
-    void execute() { (..., m_stages.get<Stages>().executeOuter(m_resources)); }
+    void execute() { (..., m_stages.template get<Stages>().executeOuter(m_resources)); }
 
    private:
     StageList m_stages;
@@ -209,7 +209,7 @@ class Pipeline {
 
 class TestPipelineStage1 : public PipelineStage<int, double> {
    protected:
-    void execute(ResourceView& resources) override {
+    void execute(ResourceView&& resources) override {
         std::cout << "Executing stage 1 with int and double" << std::endl;
         resources.get<int>() = 42;
         resources.get<double>() = 3.14;
@@ -218,7 +218,7 @@ class TestPipelineStage1 : public PipelineStage<int, double> {
 
 class TestPipelineStage2 : public PipelineStage<int, float> {
    protected:
-    void execute(ResourceView& resources) override {
+    void execute(ResourceView&& resources) override {
         std::cout << "Executing stage 2 with int and float" << std::endl;
         resources.get<int>() += 1;
         resources.get<float>() = 2.71f;
@@ -227,7 +227,7 @@ class TestPipelineStage2 : public PipelineStage<int, float> {
 
 class TestPipelineStage3 : public PipelineStage<double, char> {
    protected:
-    void execute(ResourceView& resources) override {
+    void execute(ResourceView&& resources) override {
         std::cout << "Executing stage 3 with double and char" << std::endl;
         resources.get<double>() *= 2.0;
         resources.get<char>() = 'A';
@@ -236,7 +236,7 @@ class TestPipelineStage3 : public PipelineStage<double, char> {
 
 class TestPipelineStage4 : public PipelineStage<int, double, float, char> {
    protected:
-    void execute(ResourceView& resources) override {
+    void execute(ResourceView&& resources) override {
         std::cout << "Executing stage 4" << std::endl;
         std::cout << "Final values: int = " << resources.get<int>()
                   << ", double = " << resources.get<double>()
