@@ -31,7 +31,7 @@ class Application {
     Application& operator=(const Application&) = delete;
     Application& operator=(Application&&) = delete;
 
-    ~Application(){};
+    ~Application() {};
 
     void run();
 

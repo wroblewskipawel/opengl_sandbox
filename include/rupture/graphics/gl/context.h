@@ -8,12 +8,12 @@
 
 #include "rupture/graphics/camera.h"
 #include "rupture/graphics/gl/context.inl"
-#include "rupture/graphics/gl/pipeline.h"
 #include "rupture/graphics/gl/environment.h"
 #include "rupture/graphics/gl/framebuffer.h"
 #include "rupture/graphics/gl/light.h"
 #include "rupture/graphics/gl/material_pack.h"
 #include "rupture/graphics/gl/model.h"
+#include "rupture/graphics/gl/pipeline.h"
 #include "rupture/graphics/gl/renderer/cube.h"
 #include "rupture/graphics/gl/renderer/mesh.h"
 #include "rupture/graphics/gl/renderer/quad.h"
@@ -45,8 +45,7 @@ class Context {
 
     ~Context() = default;
 
-    gl::handle::Shader loadShader(
-        const std::filesystem::path& shaderDir);
+    gl::handle::Shader loadShader(const std::filesystem::path& shaderDir);
     void loadShaders(const std::vector<std::filesystem::path>& shaderDirs);
     void loadDocument(const gltf::Document& document);
 
@@ -112,7 +111,8 @@ class Context {
         auto& shader = getCurrentShader();
         if (baseDrawInfo.materialPack != m_frameState.materialPack) {
             m_frameState.materialPack = baseDrawInfo.materialPack;
-            auto& pack = resourceStorage<MaterialPack>()[m_frameState.materialPack.index];
+            auto& pack = resourceStorage<
+                MaterialPack>()[m_frameState.materialPack.index];
             shader.bindUniformBlock(pack.blockInfo());
         }
 

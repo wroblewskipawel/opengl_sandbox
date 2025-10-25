@@ -46,16 +46,16 @@ Animation::Animation(
     auto getBufferViewEndTime = [&](const std::optional<BufferView>& view) {
         double endTime{0.0f};
         if (view.has_value()) {
-            endTime = m_translationBuffer.timeBuffer[(*view).timeOffset +
-                                                     (*view).samples - 1];
+            endTime = m_translationBuffer
+                          .timeBuffer[(*view).timeOffset + (*view).samples - 1];
         }
         return endTime;
     };
 
-    for(const auto& target: m_targets) {
-        auto endTime = std::max(
-            {getBufferViewEndTime(target.t), getBufferViewEndTime(target.r),
-             getBufferViewEndTime(target.s)});
+    for (const auto& target : m_targets) {
+        auto endTime = std::max({getBufferViewEndTime(target.t),
+                                 getBufferViewEndTime(target.r),
+                                 getBufferViewEndTime(target.s)});
         m_duration = std::max(m_duration, endTime);
     }
 }

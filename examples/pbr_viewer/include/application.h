@@ -1,7 +1,8 @@
 #pragma once
 
-#include <string>
 #include <rupture/application.h>
+
+#include <string>
 
 class Demo : public Application {
    public:
@@ -22,5 +23,4 @@ class Demo : public Application {
     std::vector<gl::handle::Model<RigidVertex>> m_rigidModels;
 
     size_t m_activeCamera{0};
-    
 };

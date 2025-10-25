@@ -1,13 +1,13 @@
 #pragma once
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
 #include <variant>
-#include <optional>
 
 template <typename T, typename... Types>
 static constexpr bool contains_type() {

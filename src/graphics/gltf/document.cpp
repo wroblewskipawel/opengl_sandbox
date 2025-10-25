@@ -31,7 +31,8 @@ std::unordered_map<uint32_t, uint32_t> Document::getNodeParentMap(
     for (size_t i{0}; i < document.nodes.size(); i++) {
         const auto& node = document.nodes[i];
         for (const auto& child : node.children) {
-            parentMap.emplace(static_cast<uint32_t>(child), static_cast<uint32_t>(i));
+            parentMap.emplace(static_cast<uint32_t>(child),
+                              static_cast<uint32_t>(i));
         }
     }
     return parentMap;

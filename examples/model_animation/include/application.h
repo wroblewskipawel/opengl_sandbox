@@ -24,7 +24,7 @@ class Demo : public Application {
         gl::handle::Model<SkinVertex>::null()};
 
     bool m_animDebugMode{false};
-    double m_animationDuration{0.0}; 
+    double m_animationDuration{0.0};
     double m_animDebugStep{0.005};
     double m_elapsedTime{0};
     gltf::Document m_document;

@@ -74,10 +74,12 @@ void Demo::update(double dTime) {
     if (!m_animDebugMode) {
         m_elapsedTime += dTime;
     }
-    m_elapsedTime -= static_cast<uint32_t>(m_elapsedTime / m_animationDuration) * m_animationDuration;
+    m_elapsedTime -=
+        static_cast<uint32_t>(m_elapsedTime / m_animationDuration) *
+        m_animationDuration;
     const auto& skin = m_document.at<gltf::Skin>()[0];
-    auto jointMatrices =
-        skin.jointMatrices(glm::identity<glm::mat4>(), animationIndex, m_elapsedTime);
+    auto jointMatrices = skin.jointMatrices(glm::identity<glm::mat4>(),
+                                            animationIndex, m_elapsedTime);
     for (size_t index = 0; index < jointMatrices.size(); ++index) {
         m_jointBlock.value.at(index) = jointMatrices[index];
     }

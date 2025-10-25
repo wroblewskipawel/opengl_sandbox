@@ -1,7 +1,8 @@
 #pragma once
 
-#include <string>
 #include <rupture/application.h>
+
+#include <string>
 
 class Demo : public Application {
    public:

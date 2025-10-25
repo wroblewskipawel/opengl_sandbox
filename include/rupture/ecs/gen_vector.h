@@ -71,7 +71,7 @@ class GenerationVector {
         return entry.item;
     }
 
-        size_t size() { return num_items; }
+    size_t size() { return num_items; }
     size_t capacity() { return items.capacity(); }
 
    private:

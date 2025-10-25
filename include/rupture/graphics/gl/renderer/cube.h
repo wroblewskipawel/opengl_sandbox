@@ -9,7 +9,6 @@
 #include "rupture/graphics/gl/texture.h"
 #include "rupture/graphics/gl/uniform.h"
 
-
 namespace gl {
 
 class CubeRenderer : public RendererState {

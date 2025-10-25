@@ -200,7 +200,9 @@ class Pipeline {
     using StageList = UniqueTypeListType<Stages...>;
     using ResourceStorage = decltype((typename Stages::ResourceList{} + ...));
 
-    void execute() { (..., m_stages.template get<Stages>().executeOuter(m_resources)); }
+    void execute() {
+        (..., m_stages.template get<Stages>().executeOuter(m_resources));
+    }
 
    private:
     StageList m_stages;

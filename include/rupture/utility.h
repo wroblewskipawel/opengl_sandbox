@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <utility>
 
-
 template <typename K, typename I>
 std::optional<I&> tryAt(const K& key, const std::unordered_map<K, I>& map) {
     auto it = map.find(key);

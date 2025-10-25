@@ -1,8 +1,8 @@
 #include "rupture/graphics/gl/renderer/cube.h"
-#include "rupture/graphics/gl/renderer/uniform.h"
 
 #include <glm/glm.hpp>
 
+#include "rupture/graphics/gl/renderer/uniform.h"
 #include "rupture/graphics/gl/texture.h"
 #include "rupture/graphics/gltf/texture.h"
 #include "rupture/graphics/shaders/shaders.h"
@@ -162,7 +162,8 @@ Texture CubeRenderer::renderEnvironmentMap(Texture& environment2D,
 
     glBindTextureUnit(0, environment2D.texture());
     m_colorCubeShader.setUniformI(renderer::uniforms::cube::ENV_2D_TEXTURE, 0);
-    m_colorCubeShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, glm::mat4{1.0f});
+    m_colorCubeShader.setUniformMatrix4(renderer::uniforms::cube::MODEL,
+                                        glm::mat4{1.0f});
     m_colorCubeShader.bindUniformBlock(m_projections.blockInfo());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -189,8 +190,10 @@ Texture CubeRenderer::renderIrradianceMap(Texture& environmentCube,
     m_irradianceMapShader.use();
 
     glBindTextureUnit(0, environmentCube.texture());
-    m_irradianceMapShader.setUniformI(renderer::uniforms::cube::ENV_CUBE_TEXTURE, 0);
-    m_irradianceMapShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, glm::mat4{1.0f});
+    m_irradianceMapShader.setUniformI(
+        renderer::uniforms::cube::ENV_CUBE_TEXTURE, 0);
+    m_irradianceMapShader.setUniformMatrix4(renderer::uniforms::cube::MODEL,
+                                            glm::mat4{1.0f});
     m_irradianceMapShader.bindUniformBlock(m_projections.blockInfo());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -215,8 +218,10 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
     m_specularMapShader.use();
 
     glBindTextureUnit(0, environmentCube.texture());
-    m_specularMapShader.setUniformI(renderer::uniforms::cube::ENV_CUBE_TEXTURE, 0);
-    m_specularMapShader.setUniformMatrix4(renderer::uniforms::cube::MODEL, glm::mat4{1.0f});
+    m_specularMapShader.setUniformI(renderer::uniforms::cube::ENV_CUBE_TEXTURE,
+                                    0);
+    m_specularMapShader.setUniformMatrix4(renderer::uniforms::cube::MODEL,
+                                          glm::mat4{1.0f});
     m_specularMapShader.bindUniformBlock(m_projections.blockInfo());
 
     for (size_t l{0}; l < mipLevels; l++) {
@@ -227,7 +232,8 @@ Texture CubeRenderer::renderSpecularMap(Texture& environmentCube,
         float roughness =
             static_cast<float>(l) / static_cast<float>(mipLevels - 1);
 
-        m_specularMapShader.setUniformF(renderer::uniforms::cube::ROUGHNESS, roughness);
+        m_specularMapShader.setUniformF(renderer::uniforms::cube::ROUGHNESS,
+                                        roughness);
 
         glViewport(0, 0, mipResolution, mipResolution);
         glClear(GL_COLOR_BUFFER_BIT);
